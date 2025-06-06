@@ -1,0 +1,995 @@
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <vector>
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <limits> // Required for std::numeric_limits to initialize AABB
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/glm.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec2.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/norm.hpp> // Required for glm::distance2
+
+#if defined(_WIN32)
+#define GLEW_STATIC // Define GLEW_STATIC before including GLEW
+#include <GL/glew.h>
+#elif defined(__APPLE__)
+#include <OpenGL/gl3.h>
+#endif
+
+#include <GLFW/glfw3.h>
+
+// Include your camera file
+#include "camera.h" // Ensure camera.h is in the same directory or an include path
+
+// --- IMGUI INCLUDES ---
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+// ------------------------
+
+// Structure definitions
+struct Vertex {
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec2 texCoords;
+};
+
+struct Mesh {
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+    GLuint VAO;
+    GLuint textureID; // For diffuse texture
+    GLuint specularTextureID; // For specular texture
+    glm::vec3 minLocalBounds; // Minimum corner of the mesh's local AABB
+    glm::vec3 maxLocalBounds; // Maximum corner of the mesh's local AABB
+    glm::vec3 minWorldBounds; // Minimum corner of the mesh's world AABB
+    glm::vec3 maxWorldBounds; // Maximum corner of the mesh's world AABB
+};
+
+// Global AABB of the main model in world coordinates (for reference, not for movement collision)
+glm::vec3 g_worldModelMinBounds = glm::vec3(std::numeric_limits<float>::max());
+glm::vec3 g_worldModelMaxBounds = glm::vec3(std::numeric_limits<float>::lowest());
+
+// Camera collision sphere radius
+// Adjust this value if the camera seems to "float" or "clip" too much into the model.
+// A value of 0.5f is a good starting point for a standard camera.
+const float CAMERA_COLLISION_RADIUS = 0.5f;
+
+// --- APPLICATION STATES ---
+enum AppState {
+    APP_STATE_MENU,
+    APP_STATE_RUNNING
+};
+
+AppState currentAppState = APP_STATE_MENU; // The application starts in the menu state
+
+// Function to get the directory from a file path
+std::string getDirectoryFromPath(const std::string& filePath) {
+    size_t lastSlash = filePath.find_last_of("/\\");
+    if (std::string::npos != lastSlash) {
+        return filePath.substr(0, lastSlash + 1);
+    }
+    return "./";
+}
+
+// Function to set up a Mesh's VAO
+GLuint setupMesh(const Mesh& mesh) {
+    GLuint VAO;
+    glCreateVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+    GLuint VBO;
+    glCreateBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(Vertex), &mesh.vertices[0], GL_STATIC_DRAW);
+    GLuint EBO;
+    glCreateBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(unsigned int), &mesh.indices[0], GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
+    glEnableVertexAttribArray(2);
+    glBindVertexArray(0);
+    return VAO;
+}
+
+// Function to load textures
+GLuint loadTexture(const std::string& path) {
+    GLuint textureID = 0;
+    int width, height, nrChannels;
+    // Enable vertical flipping of images to match OpenGL (inverted Y)
+    stbi_set_flip_vertically_on_load(true); 
+    unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+    if (data) {
+        glCreateTextures(GL_TEXTURE_2D, 1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        // Adjust wrapping and filtering parameters to avoid issues with non-power-of-2 textures
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        
+        GLenum format = 0;
+        if (nrChannels == 1) format = GL_RED;
+        else if (nrChannels == 3) format = GL_RGB;
+        else if (nrChannels == 4) format = GL_RGBA;
+        else { 
+            std::cerr << "Warning: Unsupported image format (" << nrChannels << " channels) for " << path << std::endl;
+            stbi_image_free(data); 
+            glDeleteTextures(1, &textureID); 
+            return 0; 
+        }
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        stbi_image_free(data);
+    }
+    else {
+        std::cerr << "Failed to load texture: " << path << " | Error: " << stbi_failure_reason() << std::endl;
+        return 0;
+    }
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return textureID;
+}
+
+// Default 1x1 white texture for specular maps if not found in the model
+GLuint white1x1TextureID = 0;
+
+void processNode(aiNode* node, const aiScene* scene, std::vector<Mesh>& meshes, const std::string& modelDirectory);
+
+// Processes an Assimp mesh and calculates its local AABB
+Mesh processMesh(aiMesh* mesh, const aiScene* scene, const std::string& modelDirectory) {
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+
+    // Initialize the local AABB for this mesh with extreme values
+    glm::vec3 currentMinLocal = glm::vec3(std::numeric_limits<float>::max());
+    glm::vec3 currentMaxLocal = glm::vec3(std::numeric_limits<float>::lowest());
+
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+        Vertex vertex;
+        vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+        vertex.normal = mesh->HasNormals() ? glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z) : glm::vec3(0.0f, 0.0f, 0.0f);
+        vertex.texCoords = mesh->mTextureCoords[0] ? glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y) : glm::vec2(0.0f, 0.0f);
+        vertices.push_back(vertex);
+
+        // Update the local AABB for *this* mesh
+        currentMinLocal.x = glm::min(currentMinLocal.x, vertex.position.x);
+        currentMinLocal.y = glm::min(currentMinLocal.y, vertex.position.y);
+        currentMinLocal.z = glm::min(currentMinLocal.z, vertex.position.z);
+
+        currentMaxLocal.x = glm::max(currentMaxLocal.x, vertex.position.x);
+        currentMaxLocal.y = glm::max(currentMaxLocal.y, vertex.position.y);
+        currentMaxLocal.z = glm::max(currentMaxLocal.z, vertex.position.z);
+    }
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+        aiFace face = mesh->mFaces[i];
+        for (unsigned int j = 0; j < face.mNumIndices; j++) indices.push_back(face.mIndices[j]);
+    }
+
+    // Store the local AABB limits in the Mesh object
+    // World limits will be calculated after loading the entire model and applying its transformation
+    Mesh processedMesh = { vertices, indices, 0, 0, 0, currentMinLocal, currentMaxLocal, glm::vec3(0.0f), glm::vec3(0.0f) };
+
+    // Load textures from Assimp material
+    if (mesh->mMaterialIndex >= 0) {
+        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+        aiString str;
+
+        // Load diffuse texture
+        if (material->GetTexture(aiTextureType_DIFFUSE, 0, &str) == AI_SUCCESS) {
+            std::string tFileName = str.C_Str();
+            std::string fTexPath;
+            bool isAbs = (tFileName.length() > 2 && ((tFileName[1] == ':' && (tFileName[0] >= 'A' && tFileName[0] <= 'Z')) || (tFileName[1] == ':' && (tFileName[0] >= 'a' && tFileName[0] <= 'z')) || tFileName[0] == '/' || tFileName[0] == '\\'));
+            if (isAbs) fTexPath = tFileName;
+            else {
+                std::replace(tFileName.begin(), tFileName.end(), '\\', '/');
+                if (modelDirectory != "./" && tFileName.rfind("../", 0) != 0) fTexPath = modelDirectory + tFileName;
+                else fTexPath = tFileName;
+            }
+            processedMesh.textureID = loadTexture(fTexPath);
+        }
+
+        // Load specular texture (if it exists)
+        if (material->GetTexture(aiTextureType_SPECULAR, 0, &str) == AI_SUCCESS) {
+            std::string tFileName = str.C_Str();
+            std::string fTexPath;
+            bool isAbs = (tFileName.length() > 2 && ((tFileName[1] == ':' && (tFileName[0] >= 'A' && tFileName[0] <= 'Z')) || (tFileName[1] == ':' && (tFileName[0] >= 'a' && tFileName[0] <= 'z')) || tFileName[0] == '/' || tFileName[0] == '\\'));
+            if (isAbs) fTexPath = tFileName;
+            else {
+                std::replace(tFileName.begin(), tFileName.end(), '\\', '/');
+                if (modelDirectory != "./" && tFileName.rfind("../", 0) != 0) fTexPath = modelDirectory + tFileName;
+                else fTexPath = tFileName;
+            }
+            processedMesh.specularTextureID = loadTexture(fTexPath);
+        }
+    }
+    processedMesh.VAO = setupMesh(processedMesh);
+    return processedMesh;
+}
+
+// Processes an Assimp node recursively
+void processNode(aiNode* node, const aiScene* scene, std::vector<Mesh>& meshes, const std::string& modelDirectory) {
+    for (unsigned int i = 0; i < node->mNumMeshes; i++) meshes.push_back(processMesh(scene->mMeshes[node->mMeshes[i]], scene, modelDirectory));
+    for (unsigned int i = 0; i < node->mNumChildren; i++) processNode(node->mChildren[i], scene, meshes, modelDirectory);
+}
+
+// Loads a model using Assimp
+std::vector<Mesh> loadModel(const std::string& path) {
+    Assimp::Importer importer;
+    // aiProcess_FlipUVs is important so that textures loaded with stb_image are displayed correctly in OpenGL
+    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) { std::cerr << "ASSIMP ERROR: " << importer.GetErrorString() << std::endl; return {}; }
+    std::string modelDir = getDirectoryFromPath(path);
+    std::vector<Mesh> meshes; 
+    processNode(scene->mRootNode, scene, meshes, modelDir); 
+    return meshes;
+}
+
+// Renders a mesh
+void renderMesh(const Mesh& mesh, GLuint shaderProgram) {
+    // Activate and bind the diffuse texture
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, mesh.textureID);
+    glUniform1i(glGetUniformLocation(shaderProgram, "material.diffuse"), 0);
+
+    // Activate and bind the specular texture. If none is specific, use the default white texture.
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, (mesh.specularTextureID != 0) ? mesh.specularTextureID : white1x1TextureID);
+    glUniform1i(glGetUniformLocation(shaderProgram, "material.specular"), 1);
+
+    glBindVertexArray(mesh.VAO);
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.indices.size()), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+
+    // Deactivate textures after rendering to avoid unwanted effects
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+// Function to compile shaders
+GLuint compileShader(GLenum type, const char* source) {
+    GLuint shader = glCreateShader(type);
+    glShaderSource(shader, 1, &source, NULL);
+    glCompileShader(shader);
+
+    int success;
+    char infoLog[1024];
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        // Determine the type of shader for error logging
+        std::string shaderType;
+        if (type == GL_VERTEX_SHADER) shaderType = "VERTEX";
+        else if (type == GL_FRAGMENT_SHADER) shaderType = "FRAGMENT";
+        else if (type == GL_GEOMETRY_SHADER) shaderType = "GEOMETRY"; 
+
+        std::cerr << "SHADER_COMPILATION_ERROR (" << shaderType << " type):\n" << infoLog << std::endl;
+        glDeleteShader(shader);
+        return 0;
+    }
+    return shader;
+}
+
+// Function to create and link a shader program
+GLuint createShaderProgram(const char* vsSource, const char* fsSource) {
+    GLuint vertexShader = compileShader(GL_VERTEX_SHADER, vsSource);
+    GLuint fragmentShader = compileShader(GL_FRAGMENT_SHADER, fsSource);
+
+    if (vertexShader == 0 || fragmentShader == 0) {
+        return 0; // Error in compiling one of the shaders
+    }
+
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vertexShader);
+    glAttachShader(program, fragmentShader);
+    glLinkProgram(program);
+
+    int success;
+    char infoLog[1024];
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(program, 1024, NULL, infoLog);
+        std::cerr << "SHADER_PROGRAM_LINKING_ERROR:\n" << infoLog << std::endl;
+        glDeleteProgram(program);
+        program = 0;
+    }
+
+    glDeleteShader(vertexShader); // Delete shaders once linked to the program
+    glDeleteShader(fragmentShader);
+    return program;
+}
+
+// --- Collision Detection ---
+// Function to check collision between a sphere and an AABB
+bool checkCollision(const glm::vec3& sphereCenter, float sphereRadius,
+                    const glm::vec3& aabbMin, const glm::vec3& aabbMax) {
+    glm::vec3 closestPoint;
+    closestPoint.x = glm::clamp(sphereCenter.x, aabbMin.x, aabbMax.x);
+    closestPoint.y = glm::clamp(sphereCenter.y, aabbMin.y, aabbMax.y);
+    closestPoint.z = glm::clamp(sphereCenter.z, aabbMin.z, aabbMax.z);
+    float distanceSq = glm::distance2(sphereCenter, closestPoint);
+    return distanceSq < (sphereRadius * sphereRadius);
+}
+
+
+// New function to draw a simple AABB for debugging
+// Assumes the `aabbDebugProgram` shader is already active and its uniforms `view`, `projection`, `model` and `debugColor` are set.
+void drawAABB(const glm::vec3& min, const glm::vec3& max) {
+    // Vertices for the 8 corners of the AABB
+    glm::vec3 vertices[] = {
+        glm::vec3(min.x, min.y, min.z), // 0
+        glm::vec3(max.x, min.y, min.z), // 1
+        glm::vec3(min.x, max.y, min.z), // 2
+        glm::vec3(max.x, max.y, min.z), // 3
+        glm::vec3(min.x, min.y, max.z), // 4
+        glm::vec3(max.x, min.y, max.z), // 5
+        glm::vec3(min.x, max.y, max.z), // 6
+        glm::vec3(max.x, max.y, max.z)  // 7
+    };
+
+    // Indices to draw the 12 edges (lines) of a cube
+    unsigned int indices[] = {
+        0, 1, 1, 3, 3, 2, 2, 0, // Bottom face
+        4, 5, 5, 7, 7, 6, 6, 4, // Top face
+        0, 4, 1, 5, 2, 6, 3, 7  // Connecting edges
+    };
+
+    // Create VAO, VBO, EBO for the AABB
+    GLuint VAO, VBO, EBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    // Configure vertex attributes (position only)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // Draw the lines
+    glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0); // 12 lines * 2 vertices/line = 24 indices
+
+    // Clean up VAO, VBO, EBO
+    glBindVertexArray(0);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+    glDeleteVertexArrays(1, &VAO);
+}
+
+
+// Camera instance globally
+Camera camera(glm::vec3(0.0f, 100.0f, 3.0f));
+
+// Variables for mouse handling and flashlight
+float lastX;
+float lastY;
+bool firstMouse = true;
+bool flashlightOn = true; // Flashlight on/off control
+
+// --- DEFINITION OF mouse_callback ---
+// GLFW callback for mouse movement
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
+    if (firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // Inverted as system Y coordinates go from bottom to top
+
+    lastX = xpos;
+    lastY = ypos;
+
+    camera.ProcessMouseMovement(xoffset, yoffset);
+}
+// ------------------------------------
+
+
+// Redirect GLFW mouse and keyboard callbacks to ImGui when necessary
+void mouse_callback_imgui(GLFWwindow* window, double xposIn, double yposIn) {
+    if (ImGui::GetIO().WantCaptureMouse) return; // If ImGui is capturing the mouse, do not process camera movement
+    mouse_callback(window, xposIn, yposIn); // Call the mouse_callback function for camera movement
+}
+
+void key_callback_imgui(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    // This function is commented in main, but if enabled, it should have the same logic
+    // of ImGui::GetIO().WantCaptureKeyboard to avoid conflicts if you have other ImGui elements
+    // that capture the keyboard.
+    // if (ImGui::GetIO().WantCaptureKeyboard) return; 
+    // You can add your keyboard logic for the camera here if it's not being processed by ImGui
+}
+
+// Modified processInput to accept application state
+void processInput(GLFWwindow* window, float deltaTime, const std::vector<Mesh>& collidableMeshes) {
+    // ESCAPE key to close the window - Should always work
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, true);
+    }
+
+    // Flashlight toggle - Should always work
+    static bool l_key_pressed = false;
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS && !l_key_pressed) {
+        flashlightOn = !flashlightOn;
+        l_key_pressed = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_RELEASE) {
+        l_key_pressed = false;
+    }
+
+    // Process keyboard movement (WASD) UNCONDITIONALLY
+    // (or with more specific logic if ImGui text fields are added)
+    // For this explorer, it is prioritized that movement keys always work.
+    glm::vec3 oldCameraPosition = camera.GetPosition();
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.ProcessKeyboard(LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.ProcessKeyboard(RIGHT, deltaTime);
+
+    // Iterate over all meshes considered "collidable"
+    // and check collision with each one
+    for (const auto& mesh : collidableMeshes) {
+        // Ensure the mesh's AABB is not empty or degenerate
+        if (mesh.minWorldBounds.x < mesh.maxWorldBounds.x &&
+            mesh.minWorldBounds.y < mesh.maxWorldBounds.y &&
+            mesh.minWorldBounds.z < mesh.maxWorldBounds.z)
+        {
+            if (checkCollision(camera.GetPosition(), CAMERA_COLLISION_RADIUS, mesh.minWorldBounds, mesh.maxWorldBounds)) {
+                // If there is a collision with ANY mesh, revert the camera position and exit the loop
+                camera.SetPosition(oldCameraPosition);
+                break; // Exit the loop once a collision is detected
+            }
+        }
+    }
+    // The mouse_callback_imgui already has its own check for ImGui::GetIO().WantCaptureMouse
+    // so mouse movement for the camera should already be working correctly.
+}
+
+
+int main() {
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+    unsigned int sW = 2200, sH = 1900;
+    lastX = static_cast<float>(sW) / 2.0f;
+    lastY = static_cast<float>(sH) / 2.0f;
+    GLFWwindow* win = glfwCreateWindow(sW, sH, "Modelo 3D con Colision e ImGui", nullptr, nullptr);
+    if (!win) {
+        glfwTerminate();
+        return -1;
+    }
+    glfwMakeContextCurrent(win); 
+    // Mouse and keyboard callbacks should be redirected to ImGui first
+    glfwSetCursorPosCallback(win, mouse_callback_imgui);
+    //glfwSetKeyCallback(win, key_callback_imgui); // Uncomment if ImGui handles game keys
+    
+#if defined(_WIN32)
+    if (glewInit() != GLEW_OK) { 
+        glfwTerminate();
+        return -1;
+    }
+#endif
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+
+    // --- IMGUI INITIALIZATION ---
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable keyboard navigation
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable gamepad navigation
+    // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable docking (optional, but useful)
+    // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Disabled to avoid compilation errors with platform functions
+                                                            // If enabled, you will need to ensure ImGui backends
+                                                            // are configured to compile with viewport support and that all
+                                                            // dependencies are correct.
+
+    ImGui::StyleColorsDark(); // Or StyleColorsClassic(), StyleColorsLight()
+
+    // Configure the style for a darker background, like the HTML example
+    ImVec4* colors = ImGui::GetStyle().Colors;
+    colors[ImGuiCol_WindowBg] = ImVec4(0.15f, 0.15f, 0.18f, 0.94f); // Darker window background
+    colors[ImGuiCol_TitleBgActive] = ImVec4(0.25f, 0.25f, 0.30f, 0.86f); // Active title bar
+    colors[ImGuiCol_Button] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f); // Normal button
+    colors[ImGuiCol_ButtonHovered] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f); // Button on hover
+    colors[ImGuiCol_ButtonActive] = ImVec4(0.06f, 0.53f, 0.98f, 1.00f); // Active button
+
+    ImGui_ImplGlfw_InitForOpenGL(win, true); // True to install default GLFW callbacks
+    ImGui_ImplOpenGL3_Init("#version 330");
+    // ---------------------------------
+
+    // Create a default 1x1 white texture for unfound specular maps
+    unsigned char whitePixel[] = { 255, 255, 255 };
+    glGenTextures(1, &white1x1TextureID);
+    glBindTexture(GL_TEXTURE_2D, white1x1TextureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, whitePixel);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Load the main model
+    std::vector<Mesh> meshes1 = loadModel("C:/Users/marco/Downloads/resident_evil_2_r.p.d_raccoon_police_station/scene.gltf");
+    if (meshes1.empty()) {
+        glfwTerminate();
+        return -1;
+    }
+
+    // --- Calculation of the global AABB for the entire model (for visual reference) ---
+    // This matrix must be the same as you use to render the model
+    glm::mat4 m1TF = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+    g_worldModelMinBounds = glm::vec3(std::numeric_limits<float>::max());
+    g_worldModelMaxBounds = glm::vec3(std::numeric_limits<float>::lowest());
+
+    // --- Calculate the AABBs in world coordinates for EACH mesh ---
+    // This loop also updates g_worldModelMinBounds and g_worldModelMaxBounds
+    for (auto& mesh : meshes1) { // Note: 'auto&' to be able to modify 'mesh'
+        // Transform the 8 corners of each mesh's local AABB to world space
+        glm::vec3 corners[8] = {
+            mesh.minLocalBounds,
+            glm::vec3(mesh.maxLocalBounds.x, mesh.minLocalBounds.y, mesh.minLocalBounds.z),
+            glm::vec3(mesh.minLocalBounds.x, mesh.maxLocalBounds.y, mesh.minLocalBounds.z),
+            glm::vec3(mesh.minLocalBounds.x, mesh.minLocalBounds.y, mesh.maxLocalBounds.z),
+            glm::vec3(mesh.maxLocalBounds.x, mesh.maxLocalBounds.y, mesh.minLocalBounds.z),
+            glm::vec3(mesh.maxLocalBounds.x, mesh.minLocalBounds.y, mesh.maxLocalBounds.z),
+            glm::vec3(mesh.minLocalBounds.x, mesh.maxLocalBounds.y, mesh.maxLocalBounds.z),
+            mesh.maxLocalBounds
+        };
+
+        // Reset world bounds for this mesh before calculating them
+        mesh.minWorldBounds = glm::vec3(std::numeric_limits<float>::max());
+        mesh.maxWorldBounds = glm::vec3(std::numeric_limits<float>::lowest());
+
+        for (int i = 0; i < 8; ++i) {
+            glm::vec4 transformedCorner = m1TF * glm::vec4(corners[i], 1.0f);
+            mesh.minWorldBounds = glm::min(mesh.minWorldBounds, glm::vec3(transformedCorner)); // Update mesh's AABB
+            mesh.maxWorldBounds = glm::max(mesh.maxWorldBounds, glm::vec3(transformedCorner));
+
+            // Also update the global AABB of the entire model (for reference)
+            g_worldModelMinBounds = glm::min(g_worldModelMinBounds, glm::vec3(transformedCorner));
+            g_worldModelMaxBounds = glm::max(g_worldModelMaxBounds, glm::vec3(transformedCorner));
+        }
+    }
+    // End of AABB calculation per mesh and global AABB
+
+
+    // --- Shaders for drawing debug AABBs ---
+    const char* aabbVsSrc = R"(
+#version 330 core
+layout (location = 0) in vec3 aPos;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+void main() {
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
+}
+)";
+
+    const char* aabbFsSrc = R"(
+#version 330 core
+out vec4 FragColor;
+uniform vec3 debugColor;
+void main() {
+    FragColor = vec4(debugColor, 1.0);
+}
+)";
+
+    GLuint aabbDebugProgram = createShaderProgram(aabbVsSrc, aabbFsSrc);
+    if (aabbDebugProgram == 0) {
+        glfwTerminate();
+        return -1;
+    }
+
+
+    // Vertex Shader content (copied from lighting.vs)
+    const char* vsSrc = R"(
+#version 330 core
+layout (location = 0) in vec3 position;
+layout (location = 1) in vec3 normal;
+layout (location = 2) in vec2 texCoords;
+
+out vec3 Normal;
+out vec3 FragPos;
+out vec2 TexCoords;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+void main()
+{
+    gl_Position = projection * view * model * vec4(position, 1.0f);
+    FragPos = vec3(model * vec4(position, 1.0f));
+    Normal = mat3(transpose(inverse(model))) * normal;
+    TexCoords = texCoords;
+}
+)";
+
+    // Fragment Shader content (copied from lighting.frag, with the addition of flashlightIsActive)
+    const char* fsSrc = R"(
+#version 330 core
+struct Material
+{
+    sampler2D diffuse;
+    sampler2D specular;
+    float       shininess;
+};
+
+struct Light
+{
+    vec3 position;
+    vec3 direction;
+    float cutOff;
+    float outerCutOff;
+    
+    float constant;
+    float linear;
+    float quadratic;
+    
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+
+in vec3 FragPos;
+in vec3 Normal;
+in vec2 TexCoords;
+
+out vec4 color;
+
+uniform vec3 viewPos;
+uniform Material material;
+uniform Light light;
+uniform bool flashlightIsActive; // New uniform to control the light
+
+void main()
+{
+    vec3 matAmbient  = vec3(texture(material.diffuse, TexCoords));
+    vec3 matDiffuse  = vec3(texture(material.diffuse, TexCoords));
+    vec3 matSpecular = vec3(texture(material.specular, TexCoords)); 
+
+    if (!flashlightIsActive) {
+        // If the flashlight is not active, only apply general ambient light or no light.
+        color = vec4(matAmbient * light.ambient, 1.0f);
+        return;
+    }
+
+    vec3 ambient = light.ambient * matAmbient;
+    
+    vec3 norm = normalize(Normal);
+    vec3 lightDir = normalize(light.position - FragPos);
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = light.diffuse * diff * matDiffuse; 
+    
+    vec3 viewDir = normalize(viewPos - FragPos);
+    vec3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    vec3 specular = light.specular * spec * matSpecular;
+    
+    float theta = dot(lightDir, normalize(-light.direction));
+    float epsilon = (light.cutOff - light.outerCutOff);
+    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
+    
+    if (theta > light.outerCutOff) {
+        diffuse  *= intensity;
+        specular *= intensity;
+    } else {
+        diffuse  = vec3(0.0);
+        specular = vec3(0.0);
+    }
+
+    float distance    = length(light.position - FragPos);
+    float attenuation = 1.0f / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+    ambient  *= attenuation;
+    diffuse  *= attenuation;
+    specular *= attenuation;
+    
+    color = vec4(ambient + diffuse + specular, 1.0f);
+}
+)";
+
+    GLuint prog = createShaderProgram(vsSrc, fsSrc);
+    if (prog == 0) {
+        glfwTerminate();
+        return -1;
+    }
+
+    glUseProgram(prog);
+    // Configure samplers for material textures (Unit 0 for diffuse, Unit 1 for specular)
+    glUniform1i(glGetUniformLocation(prog, "material.diffuse"), 0);
+    glUniform1i(glGetUniformLocation(prog, "material.specular"), 1);
+
+    // General light properties configuration (used by the flashlight)
+    glUniform3f(glGetUniformLocation(prog, "light.ambient"), 0.01f, 0.01f, 0.01f); // General ambient light
+    glUniform3f(glGetUniformLocation(prog, "light.diffuse"), 5.0f, 5.5f, 5.8f);    // Diffuse color of the flashlight
+    glUniform3f(glGetUniformLocation(prog, "light.specular"), 1.0f, 1.0f, 1.0f);  // Specular color of the flashlight
+
+    // Attenuation parameters for a distance light (e.g., torch or flashlight)
+    glUniform1f(glGetUniformLocation(prog, "light.constant"), 1.0f);
+    glUniform1f(glGetUniformLocation(prog, "light.linear"), 0.09f);
+    glUniform1f(glGetUniformLocation(prog, "light.quadratic"), 0.032f);
+
+    // Adjust flashlight cutoff angles (in degrees, then converted to cosine in code)
+    const float INNER_CONE_ANGLE_DEGREES = 10.5f;
+    const float OUTER_CONE_ANGLE_DEGREES = 15.5f;
+    glUniform1f(glGetUniformLocation(prog, "light.cutOff"), glm::cos(glm::radians(INNER_CONE_ANGLE_DEGREES)));
+    glUniform1f(glGetUniformLocation(prog, "light.outerCutOff"), glm::cos(glm::radians(OUTER_CONE_ANGLE_DEGREES)));
+
+    glUniform1f(glGetUniformLocation(prog, "material.shininess"), 32.0f);
+
+    float dT = 0.0f, lFT = 0.0f; // deltaTime and lastFrameTime
+    while (!glfwWindowShouldClose(win)) {
+        float cFT = static_cast<float>(glfwGetTime());
+        dT = cFT - lFT;
+        lFT = cFT;
+
+        // --- IMGUI NEW FRAME START ---
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        // ---------------------------------
+
+        // Rendering logic based on application state
+        if (currentAppState == APP_STATE_MENU) {
+            glClearColor(0.1f, 0.1f, 0.15f, 1.0f); // Dark background for the menu
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            // Calculate size and position of the ImGui window to center it
+            // Menu window size increased slightly to better accommodate elements.
+            ImVec2 windowSize(sW * 0.5f, sH * 0.4f); // 50% width, 40% height
+            ImVec2 windowPos((sW - windowSize.x) * 0.5f, (sH - windowSize.y) * 0.5f);
+            ImGui::SetNextWindowPos(windowPos, ImGuiCond_Always);
+            ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
+
+            ImGui::Begin("3D Explorer", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove);
+            
+            // Center the "3D EXPLORER" title and make it larger with spacing
+            ImGui::Dummy(ImVec2(0.0f, 10.0f)); // Top spacing
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 15.0f)); 
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.2f, 1.0f)); 
+            ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]); // Use default font, if you've loaded others you can use a different index
+            ImGui::SetWindowFontScale(1.8f); // Increase font scale for title
+            
+            float titleWidth = ImGui::CalcTextSize("3D EXPLORER").x;
+            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - titleWidth) * 0.5f);
+            ImGui::Text("3D EXPLORER"); // Title in uppercase for more impact
+            
+            ImGui::SetWindowFontScale(1.0f); // Restore font scale
+            ImGui::PopFont();
+            ImGui::PopStyleColor();
+            ImGui::PopStyleVar();
+            ImGui::Dummy(ImVec2(0.0f, 10.0f)); // Bottom spacing for title
+
+            ImGui::Separator();
+            ImGui::Spacing();
+            
+            // Improved and centered descriptive text
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.8f, 0.85f, 1.0f)); // Slightly grey text color
+            float descTextWidth = ImGui::CalcTextSize("Immerse yourself in the fascinating three-dimensional world of the Raccoon City police station. Get ready for exploration!").x;
+            // Adjust cursor position to truly center multiline text. ImGui::TextWrapped doesn't auto-center.
+            // This is a rough centering for the first line, as TextWrapped handles wrapping.
+            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - ImGui::GetContentRegionAvail().x) * 0.5f); // Attempt to center on available width
+            ImGui::TextWrapped("Immerse yourself in the fascinating three-dimensional world of the Raccoon City police station. Get ready for exploration!");
+            ImGui::PopStyleColor();
+
+            ImGui::Spacing();
+            ImGui::Dummy(ImVec2(0.0f, 40.0f)); // More vertical space before buttons
+
+            // Center buttons and give them a uniform size
+            float buttonWidth = 250.0f; // Slightly larger width
+            float buttonHeight = 60.0f; // Slightly larger height
+            float totalButtonsWidth = buttonWidth * 2 + ImGui::GetStyle().ItemSpacing.x; // Width of 2 buttons + spacing between them
+            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - totalButtonsWidth) * 0.5f);
+
+            // "Start Experience" button
+            if (ImGui::Button("Start Experience", ImVec2(buttonWidth, buttonHeight))) {
+                currentAppState = APP_STATE_RUNNING;
+                // Hide cursor and capture mouse when game starts
+                glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                firstMouse = true; // Reset so first mouse movement is correct
+                // Reset camera position and orientation for a consistent start
+                camera.SetPosition(glm::vec3(0.0f, 11.0f, 3.0f)); 
+                camera.SetYaw(-90.0f); // Initial orientation forward on negative Z axis
+                camera.SetPitch(0.0f); // Initial pitch to look horizontally
+            }
+            ImGui::SameLine(); // Puts the next element on the same line
+
+            // "Exit" button
+            if (ImGui::Button("Exit", ImVec2(buttonWidth, buttonHeight))) {
+                glfwSetWindowShouldClose(win, true);
+            }
+
+            // Footer with version information
+            ImGui::Dummy(ImVec2(0.0f, 20.0f)); // Space before footer
+            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - ImGui::CalcTextSize("Version 1.0 | Developed with ImGui and GLFW").x) * 0.5f);
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f)); // Lighter grey text for footer
+            ImGui::Text("Version 1.0 | Developed with ImGui and GLFW");
+            ImGui::PopStyleColor();
+
+
+            ImGui::End();
+
+            // Ensure mouse cursor is visible during the menu
+            glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+        } else if (currentAppState == APP_STATE_RUNNING) {
+            // Ensure mouse cursor is disabled during the game
+            glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+            processInput(win, dT, meshes1); // Process user input
+
+            glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glUseProgram(prog);
+
+            glm::mat4 vM = camera.GetViewMatrix(); // Get camera view matrix
+            glm::mat4 pM = glm::perspective(glm::radians(camera.GetZoom()), (float)sW / (float)sH, 0.1f, 1000.0f); // Use camera zoom
+
+            glUniformMatrix4fv(glGetUniformLocation(prog, "view"), 1, GL_FALSE, glm::value_ptr(vM));
+            glUniformMatrix4fv(glGetUniformLocation(prog, "projection"), 1, GL_FALSE, glm::value_ptr(pM));
+            glUniform3fv(glGetUniformLocation(prog, "viewPos"), 1, glm::value_ptr(camera.GetPosition())); // Camera position for specular calculation
+
+            // Send flashlight state to the shader
+            glUniform1i(glGetUniformLocation(prog, "flashlightIsActive"), flashlightOn ? 1 : 0);
+
+            // The flashlight's light now emanates from the camera's position and points in the camera's front direction.
+            glUniform3fv(glGetUniformLocation(prog, "light.position"), 1, glm::value_ptr(camera.GetPosition()));
+            glUniform3fv(glGetUniformLocation(prog, "light.direction"), 1, glm::value_ptr(camera.GetFront()));
+
+            // --- Render the scene ---
+            glm::mat4 m1TF_render = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+            glUniformMatrix4fv(glGetUniformLocation(prog, "model"), 1, GL_FALSE, glm::value_ptr(m1TF_render));
+            for (const auto& m : meshes1) renderMesh(m, prog);
+
+            // --- Render debug AABBs ---
+            glUseProgram(aabbDebugProgram);
+            glUniformMatrix4fv(glGetUniformLocation(aabbDebugProgram, "view"), 1, GL_FALSE, glm::value_ptr(vM));
+            glUniformMatrix4fv(glGetUniformLocation(aabbDebugProgram, "projection"), 1, GL_FALSE, glm::value_ptr(pM));
+            glm::mat4 identityModel = glm::mat4(1.0f); // AABBs are already in world space
+            glUniformMatrix4fv(glGetUniformLocation(aabbDebugProgram, "model"), 1, GL_FALSE, glm::value_ptr(identityModel));
+            
+            glUniform3f(glGetUniformLocation(aabbDebugProgram, "debugColor"), 1.0f, 0.0f, 0.0f); // Red color for AABBs
+
+            for (const auto& mesh : meshes1) {
+                // Only draw the AABB if it's valid (min < max)
+                if (mesh.minWorldBounds.x < mesh.maxWorldBounds.x &&
+                    mesh.minWorldBounds.y < mesh.maxWorldBounds.y &&
+                    mesh.minWorldBounds.z < mesh.maxWorldBounds.z)
+                {
+                    drawAABB(mesh.minWorldBounds, mesh.maxWorldBounds);
+                }
+            }
+
+            // --- In-Game HUD (Information and Controls) IMPROVED ---
+            // Set position and size to occupy the entire screen
+            ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always); 
+            ImGui::SetNextWindowSize(ImVec2(static_cast<float>(sW), static_cast<float>(sH)), ImGuiCond_Always);
+            
+            ImGui::Begin("GAME STATE", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground);
+
+            // You might want to position these elements differently for a full-screen HUD
+            // For now, placing them at the top left corner (default for Begin)
+            ImGui::Text("Game Information");
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            // Flashlight status with dynamic color
+            ImGui::Text("Flashlight: ");
+            ImGui::SameLine();
+            if (flashlightOn) {
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 1.0f, 0.2f, 1.0f)); // Bright green
+                ImGui::Text("ACTIVATED");
+                ImGui::PopStyleColor();
+            } else {
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.2f, 0.2f, 1.0f)); // Red
+                ImGui::Text("DEACTIVATED");
+                ImGui::PopStyleColor();
+            }
+            ImGui::Spacing();
+
+            // Camera position with format
+            ImGui::Text("Camera Position:");
+            ImGui::Text("  X: %.2f", camera.GetPosition().x);
+            ImGui::Text("  Y: %.2f", camera.GetPosition().y);
+            ImGui::Text("  Z: %.2f", camera.GetPosition().z);
+            ImGui::Spacing();
+
+            ImGui::Separator(); // Additional separator line
+
+            // Button to return to menu with style
+            ImGui::Dummy(ImVec2(0.0f, 10.0f)); // Space before button
+            float returnButtonWidth = 180.0f;
+            float returnButtonHeight = 40.0f;
+            // Position the button on the bottom right (adjust as needed for full screen)
+            ImGui::SetCursorPosX(ImGui::GetWindowSize().x - returnButtonWidth - 20.0f); // 20px padding from right
+            ImGui::SetCursorPosY(ImGui::GetWindowSize().y - returnButtonHeight - 20.0f); // 20px padding from bottom
+
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.2f, 0.2f, 0.8f)); // Dark red
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.3f, 0.3f, 1.0f)); // Lighter red on hover
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.1f, 0.1f, 1.0f)); // Darker red on press
+
+            if (ImGui::Button("Return to Menu", ImVec2(returnButtonWidth, returnButtonHeight))) {
+                currentAppState = APP_STATE_MENU;
+                // Ensure mouse cursor is visible when returning to menu
+                glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_NORMAL); 
+            }
+            ImGui::PopStyleColor(3); // Pop 3 style colors
+
+            ImGui::End();
+            // ---------------------------------------------
+        }
+
+        // --- IMGUI RENDERING ---
+        ImGui::Render();
+        int display_w, display_h;
+        glfwGetFramebufferSize(win, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        // Handle ImGui Viewports (IF THEY WERE ENABLED, NOW DISABLED TO AVOID LNK2019 ERROR)
+        // if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        // {
+        //     GLFWwindow* backup_current_context = glfwGetCurrentContext();
+        //     ImGui::UpdatePlatformWindows();
+        //     ImGui::RenderPlatformWindowsDefault();
+        //     glfwMakeContextCurrent(backup_current_context);
+        // }
+        // -------------------------
+
+        glfwSwapBuffers(win);
+        glfwPollEvents();
+    }
+    
+    // --- IMGUI CLEANUP ---
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+    // -------------------------
+
+    // Cleanup resources when closing the window
+    auto cleanup = [](const auto& M) {
+        for (const auto& m : M) {
+            if (m.VAO) glDeleteVertexArrays(1, &m.VAO);
+            if (m.textureID) glDeleteTextures(1, &m.textureID);
+            if (m.specularTextureID) glDeleteTextures(1, &m.specularTextureID); // Clean up specular texture too
+        }
+    };
+    cleanup(meshes1);
+    glDeleteProgram(prog);
+    glDeleteProgram(aabbDebugProgram); // Also delete the debug shader
+    glDeleteTextures(1, &white1x1TextureID); // Delete the default white texture
+    glfwTerminate();
+    return 0;
+}
