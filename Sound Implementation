@@ -1,0 +1,662 @@
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <vector>
+#include <iostream>
+#include <string>
+#include <algorithm> // For std::replace
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/glm.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec2.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/quaternion.hpp>
+
+#if defined(_WIN32)
+#include <GL/glew.h>
+#elif defined(__APPLE__)
+#include <OpenGL/gl3.h>
+#endif
+#include <filesystem>     // Includes filesystem to check for file existence
+#include <SFML/Audio.hpp> // Includes SFML for audio
+
+#include <GLFW/glfw3.h>
+
+// Include your camera file
+#include "camera.h" // Make sure camera.h is in the same directory or an include path
+
+// Structure definitions for the 3D model
+struct Vertex {
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec2 texCoords;
+};
+
+struct Mesh {
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+    GLuint VAO;
+    GLuint textureID;        // For diffuse texture
+    GLuint specularTextureID; // For specular texture
+};
+
+// Function to get the directory from a file path
+std::string getDirectoryFromPath(const std::string& filePath) {
+    size_t lastSlash = filePath.find_last_of("/\\");
+    if (std::string::npos != lastSlash) {
+        return filePath.substr(0, lastSlash + 1);
+    }
+    return "./"; // If no slash is found, assume current directory
+}
+
+// Function to set up a Mesh's VAO (Vertex Array Object)
+GLuint setupMesh(const Mesh& mesh) {
+    GLuint VAO, VBO, EBO;
+
+    // Create and bind the VAO
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    // Create the VBO (Vertex Buffer Object) and load vertex data
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(Vertex), &mesh.vertices[0], GL_STATIC_DRAW);
+
+    // Create the EBO (Element Buffer Object) and load index data
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(unsigned int), &mesh.indices[0], GL_STATIC_DRAW);
+
+    // Configure vertex attributes
+    // Positions
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glEnableVertexAttribArray(0);
+    // Normals
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+    glEnableVertexAttribArray(1);
+    // Texture coordinates
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
+    glEnableVertexAttribArray(2);
+
+    // Unbind the VAO to prevent accidental modifications
+    glBindVertexArray(0);
+
+    // No need to unbind VBO and EBO here; the VAO has already "remembered" them.
+    // glDeleteBuffers if they are not to be used directly anymore, but for the mesh they are kept.
+
+    return VAO;
+}
+
+// Function to load textures
+GLuint loadTexture(const std::string& path) {
+    GLuint textureID = 0;
+    int width, height, nrChannels;
+
+    // Load image data using stb_image
+    unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+
+    if (data) {
+        // Generate and bind the texture
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+
+        // Configure texture wrapping and filtering parameters
+        // GL_REPEAT: Repeats the texture if coordinates go beyond [0, 1]
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        // GL_LINEAR_MIPMAP_LINEAR for minification with mipmaps, GL_LINEAR for magnification
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        // Determine OpenGL format based on the number of image channels
+        GLenum format = 0;
+        if (nrChannels == 1) format = GL_RED;
+        else if (nrChannels == 3) format = GL_RGB;
+        else if (nrChannels == 4) format = GL_RGBA;
+        else {
+            std::cerr << "Unsupported image format (channels): " << nrChannels << " for " << path << std::endl;
+            stbi_image_free(data); // Free data if there's an error
+            return 0;
+        }
+
+        // Load the image to the GPU
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D); // Generate mipmaps for the texture
+
+        stbi_image_free(data); // Free image data from RAM
+    }
+    else {
+        std::cerr << "Failed to load texture: " << path << " | Error: " << stbi_failure_reason() << std::endl;
+        return 0;
+    }
+    glBindTexture(GL_TEXTURE_2D, 0); // Unbind the texture
+    return textureID;
+}
+
+// Default 1x1 white texture for specular maps not provided by the model
+GLuint white1x1TextureID = 0;
+
+// Forward declaration for recursion
+void processNode(aiNode* node, const aiScene* scene, std::vector<Mesh>& meshes, const std::string& modelDirectory);
+
+// Processes an Assimp mesh, extracting vertices, indices, and textures
+Mesh processMesh(aiMesh* mesh, const aiScene* scene, const std::string& modelDirectory) {
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+
+    // Process vertices
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+        Vertex vertex;
+        vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+        vertex.normal = mesh->HasNormals() ? glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z) : glm::vec3(0.0f); // If no normals, use zero
+        vertex.texCoords = mesh->mTextureCoords[0] ? glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y) : glm::vec2(0.0f); // First set of UVs
+        vertices.push_back(vertex);
+    }
+
+    // Process face indices
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+        aiFace face = mesh->mFaces[i];
+        for (unsigned int j = 0; j < face.mNumIndices; j++) {
+            indices.push_back(face.mIndices[j]);
+        }
+    }
+
+    // Initialize the processed Mesh
+    Mesh processedMesh = { vertices, indices, 0, 0, 0 }; // VAO and texture IDs initialized to 0
+
+    // Load textures from Assimp material
+    if (mesh->mMaterialIndex >= 0) {
+        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+        aiString str;
+
+        // Load diffuse texture
+        if (material->GetTexture(aiTextureType_DIFFUSE, 0, &str) == AI_SUCCESS) {
+            std::string tFileName = str.C_Str();
+            std::string fTexPath;
+            // Determine if the texture path is absolute or relative
+            bool isAbs = (tFileName.length() > 2 && ((tFileName[1] == ':' && (tFileName[0] >= 'A' && tFileName[0] <= 'Z')) || (tFileName[1] == ':' && (tFileName[0] >= 'a' && tFileName[0] <= 'z')) || tFileName[0] == '/' || tFileName[0] == '\\'));
+            if (isAbs) {
+                fTexPath = tFileName;
+            }
+            else {
+                std::replace(tFileName.begin(), tFileName.end(), '\\', '/'); // Normalize slashes
+                if (modelDirectory != "./" && tFileName.rfind("../", 0) != 0) { // Avoid ../ prefix if we're already in a directory
+                    fTexPath = modelDirectory + tFileName;
+                }
+                else {
+                    fTexPath = tFileName;
+                }
+            }
+            processedMesh.textureID = loadTexture(fTexPath);
+        }
+
+        // Load specular texture (if it exists)
+        if (material->GetTexture(aiTextureType_SPECULAR, 0, &str) == AI_SUCCESS) {
+            std::string tFileName = str.C_Str();
+            std::string fTexPath;
+            bool isAbs = (tFileName.length() > 2 && ((tFileName[1] == ':' && (tFileName[0] >= 'A' && tFileName[0] <= 'Z')) || (tFileName[1] == ':' && (tFileName[0] >= 'a' && tFileName[0] <= 'z')) || tFileName[0] == '/' || tFileName[0] == '\\'));
+            if (isAbs) {
+                fTexPath = tFileName;
+            }
+            else {
+                std::replace(tFileName.begin(), tFileName.end(), '\\', '/');
+                if (modelDirectory != "./" && tFileName.rfind("../", 0) != 0) {
+                    fTexPath = modelDirectory + tFileName;
+                }
+                else {
+                    fTexPath = tFileName;
+                }
+            }
+            processedMesh.specularTextureID = loadTexture(fTexPath);
+        }
+    }
+    processedMesh.VAO = setupMesh(processedMesh); // Set up the VAO for the mesh
+    return processedMesh;
+}
+
+// Processes an Assimp node recursively, extracting meshes
+void processNode(aiNode* node, const aiScene* scene, std::vector<Mesh>& meshes, const std::string& modelDirectory) {
+    // Process all meshes in the current node
+    for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+        meshes.push_back(processMesh(scene->mMeshes[node->mMeshes[i]], scene, modelDirectory));
+    }
+    // Recursively process the node's children
+    for (unsigned int i = 0; i < node->mNumChildren; i++) {
+        processNode(node->mChildren[i], scene, meshes, modelDirectory);
+    }
+}
+
+// Loads a complete 3D model using Assimp
+std::vector<Mesh> loadModel(const std::string& path) {
+    Assimp::Importer importer;
+    // Read the model file with post-processing for triangulation, smooth normals, etc.
+    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+
+    // Check if model loading was successful
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+        std::cerr << "ASSIMP ERROR: " << importer.GetErrorString() << std::endl;
+        return {}; // Return an empty vector if there's an error
+    }
+
+    std::string modelDir = getDirectoryFromPath(path); // Get the base directory of the model
+    std::vector<Mesh> meshes;
+    processNode(scene->mRootNode, scene, meshes, modelDir); // Process the root node of the model
+    return meshes;
+}
+
+// Renders a mesh using the current shader program
+void renderMesh(const Mesh& mesh, GLuint shaderProgram) {
+    // Activate and bind the diffuse texture to Texture Unit 0
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, mesh.textureID);
+
+    // Activate and bind the specular texture to Texture Unit 1
+    // If there's no specific specular texture, use the default white texture
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, (mesh.specularTextureID != 0) ? mesh.specularTextureID : white1x1TextureID);
+
+    // Bind the mesh's VAO and draw
+    glBindVertexArray(mesh.VAO);
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.indices.size()), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0); // Unbind the VAO
+
+    // Deactivate textures after rendering to avoid unwanted effects in future draws
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+// Function to compile a shader (Vertex or Fragment)
+GLuint compileShader(GLenum type, const char* source) {
+    GLuint shader = glCreateShader(type);
+    glShaderSource(shader, 1, &source, NULL);
+    glCompileShader(shader);
+
+    int success;
+    char infoLog[1024];
+    // Check if compilation was successful
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(shader, 1024, NULL, infoLog);
+        std::cerr << "SHADER_COMPILATION_ERROR of type " << type << ":\n" << infoLog << std::endl;
+        glDeleteShader(shader); // Delete the shader if there's an error
+        return 0;
+    }
+    return shader;
+}
+
+// Function to create and link a complete shader program (Vertex + Fragment)
+GLuint createShaderProgram(const char* vsSource, const char* fsSource) {
+    GLuint vertexShader = compileShader(GL_VERTEX_SHADER, vsSource);
+    GLuint fragmentShader = compileShader(GL_FRAGMENT_SHADER, fsSource);
+
+    // If either shader failed to compile, return 0
+    if (vertexShader == 0 || fragmentShader == 0) {
+        return 0;
+    }
+
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vertexShader);
+    glAttachShader(program, fragmentShader);
+    glLinkProgram(program);
+
+    int success;
+    char infoLog[1024];
+    // Check if program linking was successful
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(program, 1024, NULL, infoLog);
+        std::cerr << "SHADER_PROGRAM_LINKING_ERROR:\n" << infoLog << std::endl;
+        glDeleteProgram(program); // Delete the program if there's an error
+        program = 0;
+    }
+
+    // Delete the individual shaders once they are linked to the program
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+    return program;
+}
+
+// Global camera instance
+Camera camera(glm::vec3(0.0f, 11.0f, 3.0f));
+
+// Variables for mouse handling and flashlight
+float lastX;
+float lastY;
+bool firstMouse = true;
+bool flashlightOn = true; // Flashlight on/off control
+
+// Input processing function (keyboard)
+void processInput(GLFWwindow* window, float deltaTime) {
+    // Close window with ESC
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    // Camera movement (W, S, A, D)
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.ProcessKeyboard(LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.ProcessKeyboard(RIGHT, deltaTime);
+
+    // Toggle flashlight with 'L' key
+    static bool l_key_pressed = false;
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS && !l_key_pressed) {
+        flashlightOn = !flashlightOn;
+        l_key_pressed = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_RELEASE) {
+        l_key_pressed = false;
+    }
+}
+
+// Callback for mouse movement (controls camera orientation)
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
+    // Initialize mouse position on first movement
+    if (firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // Inverted so moving mouse up looks up
+
+    lastX = xpos;
+    lastY = ypos;
+
+    camera.ProcessMouseMovement(xoffset, yoffset);
+}
+
+int main() {
+
+    // --- GLFW Initialization ---
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Required for macOS
+#endif
+
+    unsigned int sW = 2200, sH = 1900; // Window dimensions
+    lastX = static_cast<float>(sW) / 2.0f;
+    lastY = static_cast<float>(sH) / 2.0f;
+
+    // Create the GLFW window
+    GLFWwindow* win = glfwCreateWindow(sW, sH, "3D Model", nullptr, nullptr);
+    if (!win) {
+        std::cerr << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
+    glfwMakeContextCurrent(win); // Set the OpenGL context for the window
+    glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // Hide and lock the cursor
+    glfwSetCursorPosCallback(win, mouse_callback); // Assign the mouse callback function
+
+#if defined(_WIN32)
+    // Initialize GLEW for Windows (necessary to access OpenGL extensions)
+    if (glewInit() != GLEW_OK) {
+        std::cerr << "Failed to initialize GLEW" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
+#endif
+
+    // Enable depth testing for objects to be drawn correctly
+    glEnable(GL_DEPTH_TEST);
+    // Enable face culling to avoid drawing back faces
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK); // Specify that back faces will be culled
+    glFrontFace(GL_CCW); // Specify vertex winding order for front faces (Counter-Clockwise)
+
+    // Create a default 1x1 white texture for unfound specular maps
+    // This ensures all models have a specular map, even if not provided
+    unsigned char whitePixel[] = { 255, 255, 255 }; // Pure white pixel
+    glGenTextures(1, &white1x1TextureID);
+    glBindTexture(GL_TEXTURE_2D, white1x1TextureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, whitePixel);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0); // Unbind the texture
+
+      // SFML Music
+    sf::Music music;
+    // Print the music status
+    std::cout << "Music status after play(): " << static_cast<int>(music.getStatus()) << std::endl;
+    // Important: The audio file path is what the user has specified.
+    std::string audioFilePath = "C:/Users/MSI RAIDER/Downloads/Modelo/Modelo 3d/Modelo 3d/sonido/horror.wav";
+
+    // First, check if the file physically exists
+    if (!std::filesystem::exists(audioFilePath)) {
+        std::cerr << "Error: Audio file not found at: " << audioFilePath << std::endl;
+    }
+    // Settings
+    music.setLooping(true); // Music will loop indefinitely
+    music.setVolume(100.0f); // Set volume to 100%
+    music.play();          // Start music playback
+    //
+    //
+    //
+    // Load the main stage model
+    // Make sure this path is correct and the file exists
+    std::vector<Mesh> meshes1 = loadModel("C:/Users/MSI RAIDER/Downloads/Programacion grafica/resident_evil_2_r.p.d_raccoon_police_station/scene.gltf");
+    if (meshes1.empty()) {
+        std::cerr << "Error: Stage (resident_evil_2_r.p.d_raccoon_police_station/scene.gltf) not loaded or empty." << std::endl;
+        // Clean up resources and terminate if the main model doesn't load
+        glDeleteTextures(1, &white1x1TextureID);
+        glfwTerminate();
+        return -1;
+    }
+
+    // Vertex Shader Content (unchanged)
+    const char* vsSrc = R"(
+#version 330 core
+layout (location = 0) in vec3 position;
+layout (location = 1) in vec3 normal;
+layout (location = 2) in vec2 texCoords;
+
+out vec3 Normal;
+out vec3 FragPos;
+out vec2 TexCoords;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+void main()
+{
+    gl_Position = projection * view * model * vec4(position, 1.0f);
+    FragPos = vec3(model * vec4(position, 1.0f));
+    Normal = mat3(transpose(inverse(model))) * normal;
+    TexCoords = texCoords;
+}
+)";
+
+    // Fragment Shader Content (unchanged, handles active/inactive flashlight)
+    const char* fsSrc = R"(
+#version 330 core
+struct Material
+{
+    sampler2D diffuse;
+    sampler2D specular;
+    float      shininess;
+};
+
+struct Light
+{
+    vec3 position;
+    vec3 direction;
+    float cutOff;
+    float outerCutOff;
+    
+    float constant;
+    float linear;
+    float quadratic;
+    
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+
+in vec3 FragPos;
+in vec3 Normal;
+in vec2 TexCoords;
+
+out vec4 color;
+
+uniform vec3 viewPos;
+uniform Material material;
+uniform Light light;
+uniform bool flashlightIsActive; // New uniform to control the light
+
+void main()
+{
+    vec3 matAmbient  = vec3(texture(material.diffuse, TexCoords));
+    vec3 matDiffuse  = vec3(texture(material.diffuse, TexCoords));
+    vec3 matSpecular = vec3(texture(material.specular, TexCoords)); 
+
+    if (!flashlightIsActive) {
+        // If the flashlight is not active, only apply general ambient light or no light.
+        color = vec4(matAmbient * light.ambient, 1.0f); // Only ambient so it's not completely black
+        return;
+    }
+
+    // Standard lighting calculations for a spot/flashlight
+    vec3 ambient = light.ambient * matAmbient;
+    
+    vec3 norm = normalize(Normal);
+    vec3 lightDir = normalize(light.position - FragPos);
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = light.diffuse * diff * matDiffuse;
+    
+    vec3 viewDir = normalize(viewPos - FragPos);
+    vec3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    vec3 specular = light.specular * spec * matSpecular;
+    
+    // Flashlight cone calculation (spotlight)
+    float theta = dot(lightDir, normalize(-light.direction)); // Angle between fragment and light direction
+    float epsilon = (light.cutOff - light.outerCutOff);
+    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0); // Light intensity within the cone
+    
+    if (theta > light.outerCutOff) { // If fragment is inside the outer cone
+        diffuse  *= intensity;
+        specular *= intensity;
+    } else { // If it's outside the outer cone, flashlight light is null
+        diffuse  = vec3(0.0);
+        specular = vec3(0.0);
+    }
+
+    // Light attenuation calculation with distance
+    float distance    = length(light.position - FragPos);
+    float attenuation = 1.0f / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+    ambient  *= attenuation;
+    diffuse  *= attenuation;
+    specular *= attenuation;
+    
+    color = vec4(ambient + diffuse + specular, 1.0f);
+}
+)";
+
+    // Create the shader program
+    GLuint prog = createShaderProgram(vsSrc, fsSrc);
+    if (prog == 0) {
+        glfwTerminate();
+        return -1;
+    }
+
+    glUseProgram(prog); // Use the shader program
+
+    // Configure texture units for samplers in the shader
+    glUniform1i(glGetUniformLocation(prog, "material.diffuse"), 0);  // Texture Unit 0 for `material.diffuse`
+    glUniform1i(glGetUniformLocation(prog, "material.specular"), 1); // Texture Unit 1 for `material.specular`
+
+    // Configure light properties (for the flashlight)
+    glUniform3f(glGetUniformLocation(prog, "light.ambient"), 0.01f, 0.01f, 0.01f); // Minimum general ambient light
+    glUniform3f(glGetUniformLocation(prog, "light.diffuse"), 5.0f, 5.5f, 5.8f);    // Diffuse light color (yellowish)
+    glUniform3f(glGetUniformLocation(prog, "light.specular"), 1.0f, 1.0f, 1.0f);   // Specular color (white)
+
+    // Flashlight light attenuation parameters
+    glUniform1f(glGetUniformLocation(prog, "light.constant"), 1.0f);
+    glUniform1f(glGetUniformLocation(prog, "light.linear"), 0.09f);
+    glUniform1f(glGetUniformLocation(prog, "light.quadratic"), 0.032f);
+
+    // Adjust flashlight cutoff angles (in degrees, converted to cosine for the shader)
+    const float INNER_CONE_ANGLE_DEGREES = 10.5f;
+    const float OUTER_CONE_ANGLE_DEGREES = 15.5f;
+    glUniform1f(glGetUniformLocation(prog, "light.cutOff"), glm::cos(glm::radians(INNER_CONE_ANGLE_DEGREES)));
+    glUniform1f(glGetUniformLocation(prog, "light.outerCutOff"), glm::cos(glm::radians(OUTER_CONE_ANGLE_DEGREES)));
+
+    glUniform1f(glGetUniformLocation(prog, "material.shininess"), 32.0f); // Material shininess
+
+    float dT = 0.0f, lFT = 0.0f; // Variables for delta time (time between frames)
+
+    // --- Main rendering loop ---
+    while (!glfwWindowShouldClose(win)) {
+        // Calculate delta time
+        float cFT = static_cast<float>(glfwGetTime());
+        dT = cFT - lFT;
+        lFT = cFT;
+
+        processInput(win, dT); // Process user input
+
+        // Clear color and depth buffer
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f); // Background color
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glUseProgram(prog); // Make sure to use the correct shader program
+
+        // Get view and projection matrices from the camera
+        glm::mat4 vM = camera.GetViewMatrix();
+        glm::mat4 pM = glm::perspective(glm::radians(camera.GetZoom()), (float)sW / (float)sH, 0.1f, 1000.0f);
+
+        // Send view and projection matrices to the shader
+        glUniformMatrix4fv(glGetUniformLocation(prog, "view"), 1, GL_FALSE, glm::value_ptr(vM));
+        glUniformMatrix4fv(glGetUniformLocation(prog, "projection"), 1, GL_FALSE, glm::value_ptr(pM));
+        // Send camera position (for specular calculation)
+        glUniform3fv(glGetUniformLocation(prog, "viewPos"), 1, glm::value_ptr(camera.GetPosition()));
+
+        // Send flashlight state (active/inactive) to the shader
+        glUniform1i(glGetUniformLocation(prog, "flashlightIsActive"), flashlightOn ? 1 : 0);
+
+        // The flashlight's light emanates from the camera's position and points in the camera's front direction.
+        glUniform3fv(glGetUniformLocation(prog, "light.position"), 1, glm::value_ptr(camera.GetPosition()));
+        glUniform3fv(glGetUniformLocation(prog, "light.direction"), 1, glm::value_ptr(camera.GetFront()));
+
+        // --- Render the stage ---
+        glm::mat4 m1TF = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        glUniformMatrix4fv(glGetUniformLocation(prog, "model"), 1, GL_FALSE, glm::value_ptr(m1TF));
+        for (const auto& m : meshes1) renderMesh(m, prog);
+
+        glfwSwapBuffers(win); // Swap front and back buffers
+        glfwPollEvents();      // Process all GLFW events (input, resizing, window closing)
+    }
+
+    // --- Clean up resources when the window closes ---
+    // Lambda to clean up meshes
+    auto cleanup = [](const auto& M) {
+        for (const auto& m : M) {
+            if (m.VAO) glDeleteVertexArrays(1, &m.VAO);
+            // We don't explicitly delete VBO/EBO because glDeleteVertexArrays does it for us.
+            if (m.textureID) glDeleteTextures(1, &m.textureID);
+            if (m.specularTextureID) glDeleteTextures(1, &m.specularTextureID);
+        }
+    };
+    cleanup(meshes1); // Clean up stage meshes
+    glDeleteProgram(prog); // Delete the shader program
+    glDeleteTextures(1, &white1x1TextureID); // Delete the default white texture
+    glfwTerminate(); // Terminate GLFW
+    return 0;
+}
