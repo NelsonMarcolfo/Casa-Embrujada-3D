@@ -1,0 +1,384 @@
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <vector>
+#include <iostream>
+#include <string>
+#include <algorithm>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/glm.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec2.h>
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#if defined(_WIN32)
+#include <GL/glew.h>
+#elif defined(__APPLE__)
+#include <OpenGL/gl3.h>
+#endif
+
+#include <GLFW/glfw3.h>
+
+
+// Incluir tu archivo de cámara
+#include "camera.h" // Asegúrate de que camera.h esté en el mismo directorio o en un path de inclusión
+
+// Definiciones de estructuras
+struct Vertex {
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec2 texCoords;
+};
+
+struct Mesh {
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+    GLuint VAO;
+    GLuint textureID; // Para la textura difusa
+};
+
+// Función para obtener el directorio de un path de archivo
+std::string getDirectoryFromPath(const std::string& filePath) {
+    size_t lastSlash = filePath.find_last_of("/\\");
+    if (std::string::npos != lastSlash) {
+        return filePath.substr(0, lastSlash + 1);
+    }
+    return "./";
+}
+
+// Función para configurar el VAO de un Mesh
+GLuint setupMesh(const Mesh& mesh) {
+    GLuint VAO;
+    glCreateVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+    GLuint VBO;
+    glCreateBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(Vertex), &mesh.vertices[0], GL_STATIC_DRAW);
+    GLuint EBO;
+    glCreateBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(unsigned int), &mesh.indices[0], GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
+    glEnableVertexAttribArray(2);
+    glBindVertexArray(0);
+    return VAO;
+}
+
+// Función para cargar texturas
+GLuint loadTexture(const std::string& path) {
+    GLuint textureID = 0;
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+    if (data) {
+        glCreateTextures(GL_TEXTURE_2D, 1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GLenum format = 0;
+        if (nrChannels == 1) format = GL_RED;
+        else if (nrChannels == 3) format = GL_RGB;
+        else if (nrChannels == 4) format = GL_RGBA;
+        else { stbi_image_free(data); glDeleteTextures(1, &textureID); return 0; }
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        stbi_image_free(data);
+    }
+    else {
+        std::cerr << "Fallo al cargar textura: " << path << " | Error: " << stbi_failure_reason() << std::endl;
+        return 0;
+    }
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return textureID;
+}
+
+// Procesa un mesh de Assimp
+Mesh processMesh(aiMesh* mesh, const aiScene* scene, const std::string& modelDirectory) {
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+        Vertex vertex;
+        vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+        vertex.normal = mesh->HasNormals() ? glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z) : glm::vec3(0.0f, 0.0f, 0.0f);
+        vertex.texCoords = mesh->mTextureCoords[0] ? glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y) : glm::vec2(0.0f, 0.0f);
+        vertices.push_back(vertex);
+    }
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+        aiFace face = mesh->mFaces[i];
+        for (unsigned int j = 0; j < face.mNumIndices; j++) indices.push_back(face.mIndices[j]);
+    }
+
+    Mesh processedMesh = { vertices, indices, 0, 0 };
+
+    if (mesh->mMaterialIndex >= 0) {
+        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+        aiString str;
+
+        // Carga textura difusa
+        if (material->GetTexture(aiTextureType_DIFFUSE, 0, &str) == AI_SUCCESS) {
+            std::string tFileName = str.C_Str();
+            std::string fTexPath;
+            bool isAbs = (tFileName.length() > 2 && ((tFileName[1] == ':' && (tFileName[0] >= 'A' && tFileName[0] <= 'Z')) || (tFileName[1] == ':' && (tFileName[0] >= 'a' && tFileName[0] <= 'z')) || tFileName[0] == '/' || tFileName[0] == '\\'));
+            if (isAbs) fTexPath = tFileName;
+            else {
+                std::replace(tFileName.begin(), tFileName.end(), '\\', '/');
+                if (modelDirectory != "./" && tFileName.rfind("../", 0) != 0) fTexPath = modelDirectory + tFileName;
+                else fTexPath = tFileName;
+            }
+            processedMesh.textureID = loadTexture(fTexPath);
+        }
+    }
+    processedMesh.VAO = setupMesh(processedMesh);
+    return processedMesh;
+}
+
+// Procesa un nodo de Assimp recursivamente
+void processNode(aiNode* node, const aiScene* scene, std::vector<Mesh>& meshes, const std::string& modelDirectory) {
+    for (unsigned int i = 0; i < node->mNumMeshes; i++) meshes.push_back(processMesh(scene->mMeshes[node->mMeshes[i]], scene, modelDirectory));
+    for (unsigned int i = 0; i < node->mNumChildren; i++) processNode(node->mChildren[i], scene, meshes, modelDirectory);
+}
+
+// Carga un modelo usando Assimp
+std::vector<Mesh> loadModel(const std::string& path) {
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) { std::cerr << "ASSIMP ERROR: " << importer.GetErrorString() << std::endl; return {}; }
+    std::string modelDir = getDirectoryFromPath(path);
+    std::vector<Mesh> meshes; processNode(scene->mRootNode, scene, meshes, modelDir); return meshes;
+}
+
+// Renderiza un mesh
+void renderMesh(const Mesh& mesh, GLuint shaderProgram) {
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, mesh.textureID);
+    glUniform1i(glGetUniformLocation(shaderProgram, "diffuseTexture"), 0); // Asegúrate de que tu shader tenga esta uniform
+
+    glBindVertexArray(mesh.VAO);
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.indices.size()), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+// Función para compilar shaders
+GLuint compileShader(GLenum type, const char* source) {
+    GLuint shader = glCreateShader(type);
+    glShaderSource(shader, 1, &source, NULL);
+    glCompileShader(shader);
+
+    int success;
+    char infoLog[1024];
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(shader, 1024, NULL, infoLog);
+        std::cerr << "SHADER_COMPILATION_ERROR of type " << type << ":\n" << infoLog << std::endl;
+        glDeleteShader(shader);
+        return 0;
+    }
+    return shader;
+}
+
+// Función para crear y enlazar un programa de shader
+GLuint createShaderProgram(const char* vsSource, const char* fsSource) {
+    GLuint vertexShader = compileShader(GL_VERTEX_SHADER, vsSource);
+    GLuint fragmentShader = compileShader(GL_FRAGMENT_SHADER, fsSource);
+
+    if (vertexShader == 0 || fragmentShader == 0) {
+        return 0;
+    }
+
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vertexShader);
+    glAttachShader(program, fragmentShader);
+    glLinkProgram(program);
+
+    int success;
+    char infoLog[1024];
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(program, 1024, NULL, infoLog);
+        std::cerr << "SHADER_PROGRAM_LINKING_ERROR:\n" << infoLog << std::endl;
+        glDeleteProgram(program);
+        program = 0;
+    }
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+    return program;
+}
+
+// Instancia de la cámara globalmente
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+// Variables para el manejo del mouse
+float lastX;
+float lastY;
+bool firstMouse = true;
+
+// Función de procesamiento de entrada
+void processInput(GLFWwindow* window, float deltaTime) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.ProcessKeyboard(LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.ProcessKeyboard(RIGHT, deltaTime);
+}
+
+// Callback de movimiento del mouse
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
+    if (firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos;
+
+    lastX = xpos;
+    lastY = ypos;
+
+    camera.ProcessMouseMovement(xoffset, yoffset);
+}
+
+
+int main() {
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+    unsigned int sW = 2200, sH = 1900;
+    lastX = static_cast<float>(sW) / 2.0f;
+    lastY = static_cast<float>(sH) / 2.0f;
+    GLFWwindow* win = glfwCreateWindow(sW, sH, "Modelo 3D con Camara", nullptr, nullptr);
+    if (!win) {
+        glfwTerminate();
+        return -1;
+    }
+    glfwMakeContextCurrent(win);
+    glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(win, mouse_callback);
+
+#if defined(_WIN32)
+    if (glewInit() != GLEW_OK) {
+        glfwTerminate();
+        return -1;
+    }
+#endif
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+
+
+    // Carga tu modelo aquí
+    std::vector<Mesh> meshes = loadModel("C:/Users/marco/Downloads/resident_evil_2_r.p.d_raccoon_police_station/scene.gltf");
+    if (meshes.empty()) {
+        glfwTerminate();
+        return -1;
+    }
+
+    // Shaders básicos para solo mostrar texturas
+    const char* vsSrc = R"(
+#version 330 core
+layout (location = 0) in vec3 position;
+layout (location = 1) in vec3 normal; // Aún recibimos normales, pero no las usaremos para iluminación.
+layout (location = 2) in vec2 texCoords;
+
+out vec2 TexCoords;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+void main()
+{
+    gl_Position = projection * view * model * vec4(position, 1.0f);
+    TexCoords = texCoords;
+}
+)";
+
+    const char* fsSrc = R"(
+#version 330 core
+in vec2 TexCoords;
+
+out vec4 color;
+
+uniform sampler2D diffuseTexture; // Uniform para la textura difusa
+
+void main()
+{
+    color = texture(diffuseTexture, TexCoords);
+}
+)";
+
+    GLuint prog = createShaderProgram(vsSrc, fsSrc);
+    if (prog == 0) {
+        glfwTerminate();
+        return -1;
+    }
+
+    glUseProgram(prog);
+    // Asigna la unidad de textura 0 al sampler diffuseTexture
+    glUniform1i(glGetUniformLocation(prog, "diffuseTexture"), 0);
+
+
+    float dT = 0.0f, lFT = 0.0f; // deltaTime y lastFrameTime
+    while (!glfwWindowShouldClose(win)) {
+        float cFT = static_cast<float>(glfwGetTime());
+        dT = cFT - lFT;
+        lFT = cFT;
+
+        processInput(win, dT); // Procesa la entrada del usuario
+
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glUseProgram(prog);
+
+        glm::mat4 vM = camera.GetViewMatrix();
+        glm::mat4 pM = glm::perspective(glm::radians(camera.GetZoom()), (float)sW / (float)sH, 0.1f, 1000.0f);
+
+        glUniformMatrix4fv(glGetUniformLocation(prog, "view"), 1, GL_FALSE, glm::value_ptr(vM));
+        glUniformMatrix4fv(glGetUniformLocation(prog, "projection"), 1, GL_FALSE, glm::value_ptr(pM));
+
+        // Matriz de modelo para tu objeto principal
+        glm::mat4 m1TF = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // Ejemplo de rotación
+        glUniformMatrix4fv(glGetUniformLocation(prog, "model"), 1, GL_FALSE, glm::value_ptr(m1TF));
+        for (const auto& m : meshes) renderMesh(m, prog);
+
+        glfwSwapBuffers(win);
+        glfwPollEvents();
+    }
+    // Limpieza de recursos al cerrar la ventana
+    auto cleanup = [](const auto& M) {
+        for (const auto& m : M) {
+            if (m.VAO) glDeleteVertexArrays(1, &m.VAO);
+            if (m.textureID) glDeleteTextures(1, &m.textureID);
+        }
+    };
+    cleanup(meshes);
+    glDeleteProgram(prog);
+    glfwTerminate();
+    return 0;
+}
