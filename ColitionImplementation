@@ -11,17 +11,17 @@
 #include "Shader.h"
 #include "Camera.h"
 
-// Tamaño de la ventana
+// Window dimensions
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-// Cámara controlada por el usuario
+// User-controlled camera
 Camera camera(glm::vec3(0.0f, 1.0f, 3.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
-// Control del tiempo
+// Time tracking
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
@@ -53,16 +53,16 @@ void processInput(GLFWwindow* window) {
 }
 
   // -------------------------
- // Colition Implementetion 
+ // Collision Implementation 
 // -------------------------
 
-// Estructura AABB
+// AABB structure
 struct AABB {
     glm::vec3 min;
     glm::vec3 max;
 };
 
-// Calcular el AABB de un nodo de Assimp
+// Calculate the AABB of an Assimp scene
 AABB calculateAABB(const aiScene* scene) {
     AABB aabb;
     aabb.min = glm::vec3(FLT_MAX);
@@ -80,7 +80,7 @@ AABB calculateAABB(const aiScene* scene) {
     return aabb;
 }
 
-// Dibujar el AABB como líneas
+// Create line VAO for rendering the AABB
 unsigned int createAABBLinesVAO(const AABB& aabb) {
     glm::vec3 min = aabb.min;
     glm::vec3 max = aabb.max;
@@ -113,7 +113,7 @@ unsigned int createAABBLinesVAO(const AABB& aabb) {
     return VAO;
 }
 
-// Verifica colisión entre una esfera (cámara) y el AABB
+// Check for collision between a sphere (camera) and the AABB
 bool checkCollision(const glm::vec3& sphereCenter, float radius, const AABB& box) {
     glm::vec3 closestPoint = glm::clamp(sphereCenter, box.min, box.max);
     float distance = glm::length(closestPoint - sphereCenter);
@@ -121,7 +121,7 @@ bool checkCollision(const glm::vec3& sphereCenter, float radius, const AABB& box
 }
 
 int main() {
-    // Inicialización GLFW
+    // Initialize GLFW
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -129,7 +129,7 @@ int main() {
 
     GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "AABB Collision", NULL, NULL);
     if (!window) {
-        std::cerr << "Fallo al crear la ventana\n";
+        std::cerr << "Failed to create GLFW window\n";
         glfwTerminate();
         return -1;
     }
@@ -140,28 +140,28 @@ int main() {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cerr << "Fallo GLAD\n";
+        std::cerr << "Failed to initialize GLAD\n";
         return -1;
     }
 
     glEnable(GL_DEPTH_TEST);
 
-    // Cargar modelo con Assimp
+    // Load model using Assimp
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile("modelos/escena.gltf", aiProcess_Triangulate | aiProcess_FlipUVs);
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        std::cerr << "Error Assimp: " << importer.GetErrorString() << "\n";
+        std::cerr << "Assimp error: " << importer.GetErrorString() << "\n";
         return -1;
     }
 
-    // Calcular AABB del modelo
+    // Calculate AABB of the model
     AABB modelAABB = calculateAABB(scene);
     unsigned int aabbVAO = createAABBLinesVAO(modelAABB);
 
-    // Shaders
+    // Load shaders
     Shader shader("shaders/vertex.glsl", "shaders/fragment.glsl");
 
-    // Loop principal
+    // Main loop
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -171,7 +171,7 @@ int main() {
         glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // View y projection
+        // Setup view and projection matrices
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
 
@@ -179,21 +179,21 @@ int main() {
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
 
-        // Dibujar el AABB
+        // Draw AABB bounding box
         glm::mat4 model = glm::mat4(1.0f);
         shader.setMat4("model", model);
 
         glBindVertexArray(aabbVAO);
         glDrawArrays(GL_LINES, 0, 24);
 
-        // -------------------------
-        // COLLISION BETWEEN THE CAMERA AND THE AABB
-        // -------------------------
-        float cameraRadius = 0.25f; // Radio de la cámara (esfera)
+        // ------------------------------------
+        // COLLISION DETECTION: CAMERA vs AABB
+        // ------------------------------------
+        float cameraRadius = 0.25f; // Radius of the camera (sphere)
         glm::vec3 cameraPosition = camera.Position;
 
         if (checkCollision(cameraPosition, cameraRadius, modelAABB)) {
-            std::cout << "Colisión detectada con el AABB\n";
+            std::cout << "Collision detected with AABB\n";
         }
 
         glfwSwapBuffers(window);
