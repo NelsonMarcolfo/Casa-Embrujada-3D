@@ -1,0 +1,47 @@
+[gd_scene load_steps=6 format=3 uid="uid://bdtkmgxrfxu2w"]
+
+[ext_resource type="Script" path="res://player.gd" id="1_onrkg"]
+[ext_resource type="Script" uid="uid://c0ro6jwhu2f4t" path="res://character_body_3d.gd" id="2_i3pqv"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_sweqy"]
+radius = 0.3
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2hs0m"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_onrkg"]
+radius = 0.333283
+height = 1.91214
+
+[node name="Player" type="Node3D" groups=["player"]]
+script = ExtResource("1_onrkg")
+
+[node name="CharacterBody3D" type="CharacterBody3D" parent="." groups=["player"]]
+collision_mask = 3
+script = ExtResource("2_i3pqv")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CharacterBody3D" groups=["player"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+visible = false
+mesh = SubResource("CapsuleMesh_sweqy")
+skeleton = NodePath("../..")
+surface_material_override/0 = SubResource("StandardMaterial3D_2hs0m")
+
+[node name="Camera3D" type="Camera3D" parent="CharacterBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+fov = 80.773
+
+[node name="Linterna" type="SpotLight3D" parent="CharacterBody3D/Camera3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0977659, -1.14829, -0.0926826)
+light_energy = 16.0
+light_indirect_energy = 0.1
+light_volumetric_fog_energy = 5.0
+light_size = 1.0
+shadow_bias = 10.0
+spot_range = 15.3204
+spot_attenuation = -1.0
+spot_angle = 34.2596
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.899654, 0)
+shape = SubResource("CapsuleShape3D_onrkg")
