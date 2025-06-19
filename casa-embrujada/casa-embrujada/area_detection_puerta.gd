@@ -87,3 +87,6 @@ func _on_timer_2_timeout() -> void:
 # Llama a cerrar_puerta solo si la puerta está abierta (por si acaso).
 	if puerta_abierta:
 		cerrar_puerta()
+		# Función para que otros scripts puedan consultar el estado inicial
+func get_puerta_abierta_estado() -> bool:
+		return puerta_abierta

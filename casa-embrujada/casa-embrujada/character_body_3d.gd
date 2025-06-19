@@ -7,16 +7,26 @@ extends CharacterBody3D
 
 # --- REFERENCIAS A NODOS ---
 @onready var camera: Camera3D = $Camera3D
-# NUEVA LÍNEA: Referencia a la linterna
-@onready var linterna: SpotLight3D = $Camera3D/Linterna # Asegúrate de que esta ruta sea correcta si tu Linterna no es hija directa del CharacterBody3D
+# Referencia a la linterna
+@onready var linterna: SpotLight3D = $Camera3D/Linterna # Asegúrate de que esta ruta sea correcta
+# NUEVA LÍNEA: Referencia al AudioStreamPlayer3D para los sonidos de los pasos # Asegúrate de que esta ruta sea correcta
+
+# Opcional: Si tienes varios sonidos de pasos para variedad
+@export var footstep_sounds: Array[AudioStream] # Arrastra tus archivos de sonido aquí en el Inspector
 
 # --- VARIABLES INTERNAS DE LÓGICA ---
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity") # Gravedad del proyecto
 var direction: Vector3 = Vector3.ZERO # Dirección de movimiento del jugador
 var look_direction: Vector2 = Vector2.ZERO # Dirección de la mirada (ángulos de la cámara)
 
-# NUEVA LÍNEA: Estado de la linterna
+# Estado de la linterna
 var linterna_encendida: bool = false
+
+# NUEVA LÍNEA: Controla si el sonido de pasos ya se está reproduciendo
+var is_footstep_sound_playing: bool = false
+# NUEVA LÍNEA: Frecuencia de los pasos (cuántos pasos por segundo se escucharán)
+@export var footstep_interval: float = 0.4 # Un paso cada 0.4 segundos (ajusta según la velocidad)
+var footstep_timer: float = 0.0 # Timer interno para controlar la frecuencia de los pasos
 
 
 func _ready() -> void:
@@ -26,6 +36,10 @@ func _ready() -> void:
 	# Asegurarse de que la linterna está inicialmente apagada
 	if linterna:
 		linterna.visible = false
+	
+	# Asegurarse de que el AudioStreamPlayer3D esté asignado
+	# Si tienes varios sonidos, la carga se maneja en 'play_footstep_sound'
+	# Si no usas el array exportado, asegúrate de asignar un sonido directamente al footstep_sound_player.stream en el editor.
 
 func _input(event: InputEvent) -> void:
 	# Manejar la entrada del ratón para mirar alrededor
@@ -38,7 +52,7 @@ func _input(event: InputEvent) -> void:
 
 		# Aplicar rotación a los nodos
 		# Rotar el CharacterBody3D horizontalmente (Yaw)
-		rotation.y = look_direction.x 
+		rotation.y = look_direction.x
 		# Rotar la Camera3D verticalmente (Pitch)
 		camera.rotation.x = look_direction.y
 
@@ -57,13 +71,14 @@ func _physics_process(delta: float) -> void:
 	# Manejar el salto
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = jump_velocity
+		# NUEVA LÓGICA: Detener sonido de pasos al saltar
+
 
 	# Obtener la entrada del teclado para el movimiento
 	direction = Vector3.ZERO
 	var input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
 
 	# Mover en relación a la dirección de la cámara (primera persona)
-	# Renombramos 'transform' a 'camera_transform' para evitar la advertencia de "shadowing".
 	var camera_transform = camera.global_transform
 	direction = (camera_transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 
@@ -71,9 +86,19 @@ func _physics_process(delta: float) -> void:
 	if direction:
 		velocity.x = direction.x * speed
 		velocity.z = direction.z * speed
+		
+		# NUEVA LÓGICA: Reproducir sonido de pasos si se está moviendo y en el suelo
+		if is_on_floor():
+			footstep_timer += delta
+			if footstep_timer >= footstep_interval:
+			
+				footstep_timer = 0.0 # Reiniciar el contador para el siguiente paso
 	else:
 		velocity.x = move_toward(velocity.x, 0, speed) # Frenado suave en X
 		velocity.z = move_toward(velocity.z, 0, speed) # Frenado suave en Z
+		
+		# NUEVA LÓGICA: Detener sonido de pasos si no se está moviendo o está en el aire
+
 
 	move_and_slide() # Mover y resolver colisiones
 
@@ -83,5 +108,6 @@ func toggle_flashlight():
 		linterna_encendida = not linterna_encendida # Invertir el estado
 		linterna.visible = linterna_encendida # Aplicar el estado de visibilidad
 	else:
-		# Esto solo debería ocurrir si la linterna no se asignó correctamente o el nodo fue eliminado.
 		print("Advertencia: No se encontró el nodo de la linterna.")
+
+# --- FUNCIONES PARA SONIDOS DE PASOS (MODIFICADAS) ---
