@@ -1,9 +1,12 @@
-[gd_scene load_steps=9 format=3 uid="uid://ub17mwwp0vfn"]
+[gd_scene load_steps=13 format=3 uid="uid://ub17mwwp0vfn"]
 
 [ext_resource type="Texture2D" uid="uid://dy3ic543wsw06" path="res://137222_header_small.jpg" id="1_0xm2m"]
+[ext_resource type="PackedScene" uid="uid://cslhc66eqb77g" path="res://NONO.glb" id="1_7mycd"]
 [ext_resource type="PackedScene" uid="uid://bdtkmgxrfxu2w" path="res://player.tscn" id="2_0xm2m"]
 [ext_resource type="PackedScene" uid="uid://db5v67cx3fis3" path="res://sketchfab_scene.tscn" id="3_h2yge"]
 [ext_resource type="AudioStream" uid="uid://cu6jvr5gej0b3" path="res://SONIDO DE VIENTO (NEBLINA) MIEDO  Efecto de sonido.mp3" id="4_1bvp3"]
+[ext_resource type="PackedScene" uid="uid://ceogn3eutnt56" path="res://bosque.tscn" id="5_272bh"]
+[ext_resource type="PackedScene" uid="uid://be68q41suih71" path="res://smile.glb" id="7_272bh"]
 
 [sub_resource type="Environment" id="Environment_0xm2m"]
 background_mode = 1
@@ -15,6 +18,9 @@ fog_light_color = Color(0.114897, 0.114897, 0.114897, 1)
 fog_light_energy = 0.3
 fog_density = 1.0
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lquwl"]
+albedo_texture = ExtResource("1_0xm2m")
+
 [sub_resource type="PlaneMesh" id="PlaneMesh_h2yge"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1bvp3"]
@@ -24,18 +30,24 @@ roughness = 0.94
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_0xm2m"]
 
-[node name="Main" type="Node3D"]
+[node name="s" type="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.55218, 0.945392, -1.45491)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_0xm2m")
 
+[node name="NONO" parent="WorldEnvironment" instance=ExtResource("1_7mycd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.54636, 5.40213, -3.5471)
+
 [node name="Floor" type="MeshInstance3D" parent="."]
-transform = Transform3D(20, 0, 0, 0, 20, 0, 0, 0, 20, 0, 0, 0)
+transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, -1.01096, -2.68208, 0.234579)
 layers = 2
+material_override = SubResource("StandardMaterial3D_lquwl")
 mesh = SubResource("PlaneMesh_h2yge")
 surface_material_override/0 = SubResource("StandardMaterial3D_1bvp3")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Floor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0221623, -0.00953067, 0.040456)
 disable_mode = 1
 collision_layer = 2
 
@@ -47,7 +59,7 @@ shape = SubResource("BoxShape3D_0xm2m")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.29718, 18.2407, 0.46899)
 
 [node name="Sketchfab_Scene" parent="." instance=ExtResource("3_h2yge")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.437428, 2.1871, 0.162794)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.416625, 3.72782, 5.83292)
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("4_1bvp3")
@@ -56,3 +68,21 @@ pitch_scale = 1.74
 autoplay = true
 playback_type = 1
 parameters/looping = true
+
+[node name="Bosque" parent="." instance=ExtResource("5_272bh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.8711, 5.07699, -19.3849)
+
+[node name="Bosque2" parent="." instance=ExtResource("5_272bh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.313, 5.02877, 34.5053)
+
+[node name="Bosque3" parent="." instance=ExtResource("5_272bh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.7936, 5.28711, 34.1456)
+
+[node name="Bosque4" parent="." instance=ExtResource("5_272bh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.284, 5.44921, -33.0404)
+
+[node name="Bosque5" parent="." instance=ExtResource("5_272bh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52.8915, 5.53333, -13.4862)
+
+[node name="smile" parent="." instance=ExtResource("7_272bh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.51743, 4.73236, -1.67032)
