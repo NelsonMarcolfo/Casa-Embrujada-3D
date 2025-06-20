@@ -1,7 +1,11 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
 [gd_scene load_steps=8 format=3 uid="uid://dwca48mcy6ub6"]
 
+=======
+[gd_scene load_steps=23 format=4 uid="uid://b1lwqfyjk3ote"]
+>>>>>>> Stashed changes
 =======
 [gd_scene load_steps=23 format=4 uid="uid://b1lwqfyjk3ote"]
 >>>>>>> Stashed changes
@@ -18,7 +22,10 @@
 [ext_resource type="PackedScene" uid="uid://b11osvwww84o2" path="res://Modelos/la_llorona_statue_at_taco_boy.glb" id="9_kek77"]
 [ext_resource type="Script" uid="uid://dhvvamqc3cw2y" path="res://area_llorona.gd" id="10_4c57u"]
 [ext_resource type="AudioStream" uid="uid://bp7hx0w4xaji0" path="res://Grito de mujer aterrada  Efecto de sonido - JYGA (mp3cut.net) (1).mp3" id="12_dg77c"]
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 
 [sub_resource type="Environment" id="Environment_0xm2m"]
 background_mode = 1
@@ -154,7 +161,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0787244, 3.3062, -7.59629)
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 11.3479, 4.15492, -2.2913)
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 [node name="Node3D" parent="." instance=ExtResource("8_5vw27")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.12729, 78.7288, 0)
 
@@ -185,4 +195,7 @@ stream = ExtResource("12_dg77c")
 [connection signal="body_exited" from="Player/AreaPlayer" to="Player/AreaPlayer" method="_on_body_exited"]
 [connection signal="body_entered" from="Llorona/AreaLlorona" to="Llorona/AreaLlorona" method="_on_body_entered"]
 [connection signal="body_exited" from="Llorona/AreaLlorona" to="Llorona/AreaLlorona" method="_on_body_exited"]
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
