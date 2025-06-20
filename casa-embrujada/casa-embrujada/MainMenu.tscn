@@ -1,0 +1,80 @@
+[gd_scene load_steps=4 format=3 uid="uid://cu7o0vetqi34k"]
+
+[ext_resource type="Script" uid="uid://dxv5uay76qr4j" path="res://main_menu.gd" id="1_eiy7p"]
+[ext_resource type="Texture2D" uid="uid://1jyms6w6q1ui" path="res://Images/fotomenu.jpg" id="2_eiy7p"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_eiy7p"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_eiy7p")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -4.0
+offset_top = -3.0
+offset_right = -4.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.00184107, 0.00184107, 0.00184107, 1)
+metadata/_edit_group_ = true
+
+[node name="TextureRect" type="TextureRect" parent="ColorRect"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 3.0
+offset_right = 4.0
+offset_bottom = 3.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_eiy7p")
+expand_mode = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ColorRect"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -143.0
+offset_top = -91.0
+offset_right = 158.0
+offset_bottom = 124.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 28
+
+[node name="Play" type="Button" parent="ColorRect/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = SubResource("StyleBoxEmpty_eiy7p")
+text = "PLAY"
+
+[node name="help" type="Button" parent="ColorRect/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "HELP
+"
+
+[node name="Credits" type="Button" parent="ColorRect/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "CREDITS
+"
+
+[connection signal="pressed" from="ColorRect/VBoxContainer/Play" to="." method="_on_play_pressed"]
+[connection signal="pressed" from="ColorRect/VBoxContainer/help" to="." method="_on_help_pressed"]
+[connection signal="pressed" from="ColorRect/VBoxContainer/Credits" to="." method="_on_credits_pressed"]
