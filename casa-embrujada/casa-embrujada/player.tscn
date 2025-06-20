@@ -38,9 +38,9 @@ light_indirect_energy = 0.1
 light_volumetric_fog_energy = 5.0
 light_size = 1.0
 shadow_bias = 10.0
-spot_range = 15.3204
-spot_attenuation = -1.0
-spot_angle = 34.2596
+spot_range = 17.388
+spot_attenuation = -1.2
+spot_angle = 37.4728
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.899654, 0)
