@@ -11,10 +11,7 @@ config_version=5
 [application]
 
 config/name="Casa Embrujada"
-
 run/main_scene="uid://c1lvn3tsfnxgx"
-
-
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 
