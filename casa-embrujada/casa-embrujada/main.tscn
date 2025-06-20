@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://dwca48mcy6ub6"]
+[gd_scene load_steps=25 format=3 uid="uid://dwca48mcy6ub6"]
 
 [ext_resource type="Texture2D" uid="uid://dy3ic543wsw06" path="res://137222_header_small.jpg" id="1_0xm2m"]
 [ext_resource type="PackedScene" uid="uid://1jgufjci7crx" path="res://mesita.glb" id="1_kek77"]
@@ -12,6 +12,8 @@
 [ext_resource type="PackedScene" uid="uid://dm7yl1cmw5hgh" path="res://sangre.glb" id="5_w48qg"]
 [ext_resource type="PackedScene" uid="uid://cslhc66eqb77g" path="res://NONO.glb" id="6_272bh"]
 [ext_resource type="PackedScene" uid="uid://be68q41suih71" path="res://smile.glb" id="7_5vw27"]
+[ext_resource type="Script" uid="uid://ecudfsedxiet" path="res://Area.gd" id="8_cegan"]
+[ext_resource type="AudioStream" uid="uid://c80bo58hs5gvk" path="res://footsteps-on-wood-floor-14735.mp3" id="9_82xsv"]
 [ext_resource type="PackedScene" uid="uid://d0uh8fguetoxx" path="res://demon.glb" id="11_efxa6"]
 [ext_resource type="PackedScene" uid="uid://dhbcjq3o16ewc" path="res://lobo.glb" id="12_dg77c"]
 [ext_resource type="PackedScene" uid="uid://pyr2mc0t1ibg" path="res://hand.glb" id="15_vivmo"]
@@ -36,6 +38,9 @@ albedo_texture = ExtResource("1_0xm2m")
 roughness = 0.94
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_0xm2m"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_getpj"]
+size = Vector3(23.5336, 6.12469, 12.2377)
 
 [node name="Main" type="Node3D"]
 
@@ -76,6 +81,18 @@ shape = SubResource("BoxShape3D_0xm2m")
 
 [node name="Player" parent="." instance=ExtResource("2_0xm2m")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.29718, 18.2407, 0.46899)
+script = null
+
+[node name="Area3D" type="Area3D" parent="Player" node_paths=PackedStringArray("sonido_pasos_ambiente_player")]
+script = ExtResource("8_cegan")
+sonido_pasos_ambiente_player = NodePath("../AudioStreamPlayer")
+sonido_pasos_ambiente_clip = ExtResource("9_82xsv")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/Area3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7914, -15.5408, -6.2851)
+shape = SubResource("BoxShape3D_getpj")
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="Player"]
 
 [node name="Sketchfab_Scene" parent="." instance=ExtResource("3_h2yge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.371381, 1.99651, 0.133284)
@@ -147,3 +164,6 @@ transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 8.67784, 3.71186, -7.8058)
 
 [node name="Sketchfab_Scene5" parent="." instance=ExtResource("17_yaehf")]
 transform = Transform3D(0.156472, -0.680704, -2.91756, -1.09973, 2.70454, -0.689983, 2.78678, 1.10549, -0.108467, -4.61173, 7.14629, 0.112695)
+
+[connection signal="body_entered" from="Player/Area3D" to="Player/Area3D" method="_on_body_entered"]
+[connection signal="body_exited" from="Player/Area3D" to="Player/Area3D" method="_on_body_exited"]
