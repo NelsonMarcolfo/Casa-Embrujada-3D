@@ -1,9 +1,12 @@
+
 [gd_scene load_steps=86 format=4 uid="uid://ub17mwwp0vfn"]
 
 [ext_resource type="Texture2D" uid="uid://dy3ic543wsw06" path="res://137222_header_small.jpg" id="1_0xm2m"]
 [ext_resource type="Script" uid="uid://6cwqmchguifd" path="res://main.gd" id="1_lquwl"]
+
 [ext_resource type="PackedScene" uid="uid://bdtkmgxrfxu2w" path="res://player.tscn" id="2_0xm2m"]
 [ext_resource type="AudioStream" uid="uid://cu6jvr5gej0b3" path="res://SONIDO DE VIENTO (NEBLINA) MIEDO  Efecto de sonido.mp3" id="4_1bvp3"]
+Song_and_animation
 [ext_resource type="Texture2D" uid="uid://cnkd7y8tp2dud" path="res://cabana_1.jpg" id="4_dg77c"]
 [ext_resource type="Texture2D" uid="uid://0nx1w2wle6hh" path="res://cabana_3.jpg" id="5_ycdy4"]
 [ext_resource type="Script" uid="uid://dg1tkn6ligkc8" path="res://area_silencio_musical.gd" id="6_7mycd"]
@@ -12,6 +15,8 @@
 [ext_resource type="Texture2D" uid="uid://c4umo4pcgyfja" path="res://cabana_0.jpg" id="8_2cqfq"]
 [ext_resource type="Texture2D" uid="uid://dqodlxct5wsn5" path="res://cabana_2.jpg" id="9_yaehf"]
 [ext_resource type="Script" uid="uid://0wpyeobl1p8c" path="res://area_de_madera.gd" id="10_074og"]
+[ext_resource type="PackedScene" uid="uid://ceogn3eutnt56" path="res://bosque.tscn" id="5_272bh"]
+[ext_resource type="PackedScene" uid="uid://be68q41suih71" path="res://smile.glb" id="7_272bh"]
 
 [sub_resource type="Environment" id="Environment_0xm2m"]
 background_mode = 1
@@ -23,6 +28,9 @@ fog_light_color = Color(0.114897, 0.114897, 0.114897, 1)
 fog_light_energy = 0.3
 fog_density = 1.0
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lquwl"]
+albedo_texture = ExtResource("1_0xm2m")
+
 [sub_resource type="PlaneMesh" id="PlaneMesh_h2yge"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1bvp3"]
@@ -30,7 +38,8 @@ albedo_color = Color(0.497979, 0.583753, 0.637733, 1)
 albedo_texture = ExtResource("1_0xm2m")
 roughness = 0.94
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_0xm2m"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_0xm2
+
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p0vth"]
 resource_name = "Material.002"
@@ -938,16 +947,22 @@ size = Vector3(18.5078, 6.33316, 12.5985)
 [node name="Main" type="Node3D"]
 script = ExtResource("1_lquwl")
 
+
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_0xm2m")
 
+[node name="NONO" parent="WorldEnvironment" instance=ExtResource("1_7mycd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.54636, 5.40213, -3.5471)
+
 [node name="Floor" type="MeshInstance3D" parent="."]
-transform = Transform3D(20, 0, 0, 0, 20, 0, 0, 0, 20, 0, 0, 0)
+transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, -1.01096, -2.68208, 0.234579)
 layers = 2
+material_override = SubResource("StandardMaterial3D_lquwl")
 mesh = SubResource("PlaneMesh_h2yge")
 surface_material_override/0 = SubResource("StandardMaterial3D_1bvp3")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Floor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0221623, -0.00953067, 0.040456)
 disable_mode = 1
 collision_layer = 2
 
@@ -959,8 +974,10 @@ shape = SubResource("BoxShape3D_0xm2m")
 [node name="Player" parent="." instance=ExtResource("2_0xm2m")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.34034, 10.8795, 10.4859)
 
+Song_and_animation
 [node name="Sketchfab_Scene" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.437428, 2.1871, 0.162794)
+
 
 [node name="Sketchfab_model" type="Node3D" parent="Sketchfab_Scene"]
 transform = Transform3D(1, 0, 0, 0, 2.22045e-16, 1, 0, -1, 2.22045e-16, 0, 0, 0)
@@ -1275,6 +1292,7 @@ autoplay = true
 playback_type = 1
 parameters/looping = true
 
+ Song_and_animation
 [node name="AreaSilencioMusical" type="Area3D" parent="AudioStreamPlayer" node_paths=PackedStringArray("musica_a_silenciar", "puerta_referencia")]
 script = ExtResource("6_7mycd")
 musica_a_silenciar = NodePath("..")
@@ -1293,3 +1311,20 @@ shape = SubResource("BoxShape3D_272bh")
 [connection signal="body_entered" from="Sketchfab_Scene/Sketchfab_model/Collada visual scene group/Cube_012/AreadeMadera" to="Sketchfab_Scene/Sketchfab_model/Collada visual scene group/Cube_012/AreadeMadera" method="_on_body_entered"]
 [connection signal="body_entered" from="AudioStreamPlayer/AreaSilencioMusical" to="AudioStreamPlayer/AreaSilencioMusical" method="_on_body_entered"]
 [connection signal="body_exited" from="AudioStreamPlayer/AreaSilencioMusical" to="AudioStreamPlayer/AreaSilencioMusical" method="_on_body_exited"]
+[node name="Bosque" parent="." instance=ExtResource("5_272bh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.8711, 5.07699, -19.3849)
+
+[node name="Bosque2" parent="." instance=ExtResource("5_272bh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.313, 5.02877, 34.5053)
+
+[node name="Bosque3" parent="." instance=ExtResource("5_272bh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.7936, 5.28711, 34.1456)
+
+[node name="Bosque4" parent="." instance=ExtResource("5_272bh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.284, 5.44921, -33.0404)
+
+[node name="Bosque5" parent="." instance=ExtResource("5_272bh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52.8915, 5.53333, -13.4862)
+
+[node name="smile" parent="." instance=ExtResource("7_272bh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.51743, 4.73236, -1.67032)
