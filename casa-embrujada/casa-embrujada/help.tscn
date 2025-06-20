@@ -1,0 +1,117 @@
+[gd_scene load_steps=4 format=3 uid="uid://csowot4phg1ag"]
+
+[ext_resource type="Script" uid="uid://xk3koikgolmx" path="res://help.gd" id="1_e3oed"]
+[ext_resource type="Texture2D" uid="uid://do6llb1aorf1i" path="res://Images/Helpme.webp" id="2_4abyq"]
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_e3oed"]
+thickness = 0
+
+[node name="Help" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_e3oed")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TextureRect" type="TextureRect" parent="ColorRect"]
+layout_mode = 2
+offset_left = -1.0
+offset_top = 109.0
+offset_right = 1147.0
+offset_bottom = 636.0
+texture = ExtResource("2_4abyq")
+stretch_mode = 6
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -194.0
+offset_top = 13.0
+offset_right = 194.0
+offset_bottom = 65.0
+grow_horizontal = 2
+
+[node name="Button" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = SubResource("StyleBoxLine_e3oed")
+text = "Virtual Tour Controls"
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -574.0
+offset_top = -250.0
+offset_right = 578.0
+offset_bottom = 328.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Button" type="Button" parent="VBoxContainer2"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Welcome to the haunted house! Here's how to move around and use items:"
+
+[node name="VBoxContainer3" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 263.0
+offset_top = 170.0
+offset_right = 879.0
+offset_bottom = 539.0
+theme_override_constants/separation = 11
+
+[node name="Button" type="Button" parent="VBoxContainer3"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Move:"
+alignment = 0
+
+[node name="Button2" type="Button" parent="VBoxContainer3"]
+layout_mode = 2
+text = "Forward: W"
+
+[node name="Button3" type="Button" parent="VBoxContainer3"]
+layout_mode = 2
+text = "Backward: S"
+
+[node name="Button4" type="Button" parent="VBoxContainer3"]
+layout_mode = 2
+text = "Left: A"
+
+[node name="Button5" type="Button" parent="VBoxContainer3"]
+layout_mode = 2
+text = "Right: D"
+
+[node name="Button6" type="Button" parent="VBoxContainer3"]
+layout_mode = 2
+text = "Jump: Spacebar"
+
+[node name="Button7" type="Button" parent="VBoxContainer3"]
+layout_mode = 2
+text = "Interact: E"
+
+[node name="Button8" type="Button" parent="VBoxContainer3"]
+layout_mode = 2
+text = "Flashlight (toggle on/off): F"
+
+[node name="Button9" type="Button" parent="VBoxContainer3"]
+layout_mode = 2
+text = "Return: Z"

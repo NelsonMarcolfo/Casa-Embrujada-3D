@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3 uid="uid://bdtkmgxrfxu2w"]
+[gd_scene load_steps=7 format=3 uid="uid://bdtkmgxrfxu2w"]
 
 [ext_resource type="Script" uid="uid://i4n43giyaw4f" path="res://player.gd" id="1_onrkg"]
 [ext_resource type="Script" uid="uid://c0ro6jwhu2f4t" path="res://character_body_3d.gd" id="2_i3pqv"]
+[ext_resource type="AudioStream" uid="uid://bx5w4poyjk0od" path="res://pasos-suaves-02-68341.mp3" id="3_i3pqv"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_sweqy"]
 radius = 0.3
@@ -13,7 +14,7 @@ height = 1.8
 radius = 0.333283
 height = 1.91214
 
-[node name="Player" type="Node3D" groups=["player"]]
+[node name="Player" type="Node3D"]
 script = ExtResource("1_onrkg")
 
 [node name="CharacterBody3D" type="CharacterBody3D" parent="." groups=["player"]]
@@ -45,3 +46,7 @@ spot_angle = 37.4728
 [node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.899654, 0)
 shape = SubResource("CapsuleShape3D_onrkg")
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="CharacterBody3D"]
+stream = ExtResource("3_i3pqv")
+volume_db = 24.0
