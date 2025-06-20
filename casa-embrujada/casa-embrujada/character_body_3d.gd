@@ -11,8 +11,6 @@ extends CharacterBody3D
 @onready var camera: Camera3D = $Camera3D
 @onready var linterna: SpotLight3D = $Camera3D/Linterna
 
-
-# NUEVA LÍNEA: Estado de la linterna
 # --- VARIABLES INTERNAS ---
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var direction: Vector3 = Vector3.ZERO
