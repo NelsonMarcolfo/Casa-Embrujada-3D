@@ -1,4 +1,4 @@
-[gd_scene load_steps=71 format=4 uid="uid://db5v67cx3fis3"]
+[gd_scene load_steps=76 format=4 uid="uid://db5v67cx3fis3"]
 
 [ext_resource type="Texture2D" uid="uid://cnkd7y8tp2dud" path="res://cabana_1.jpg" id="1_2x2vl"]
 [ext_resource type="Texture2D" uid="uid://0nx1w2wle6hh" path="res://cabana_3.jpg" id="2_w8wig"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://bg1vwh2r135re" path="res://area_detection_puerta.gd" id="3_w8wig"]
 [ext_resource type="Script" uid="uid://dkt4dmh03ellw" path="res://area_3d.gd" id="4_bnieh"]
 [ext_resource type="Texture2D" uid="uid://dqodlxct5wsn5" path="res://cabana_2.jpg" id="4_cike5"]
+[ext_resource type="Script" uid="uid://0wpyeobl1p8c" path="res://area_de_madera.gd" id="7_cike5"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p0vth"]
 resource_name = "Material.002"
@@ -233,38 +234,6 @@ _data = {
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_2ofh7"]
 size = Vector3(2.92236, 4.55316, 4.87207)
-
-[sub_resource type="ArrayMesh" id="ArrayMesh_hvris"]
-_surfaces = [{
-"aabb": AABB(-0.230434, -1.94227, -2.34461, 0.230432, 2.00311, 4.68922),
-"format": 34896613377,
-"index_count": 36,
-"index_data": PackedByteArray("AAABAAIAAgABAAMAAAACAAQAAQAFAAMAAQAAAAUAAgADAAYABAACAAYABgADAAUAAAAEAAcABAAGAAcAAAAHAAUABgAFAAcA"),
-"name": "Material",
-"primitive": 3,
-"uv_scale": Vector4(0, 0, 0, 0),
-"vertex_count": 8,
-"vertex_data": PackedByteArray("//8AAP//AAD///////8AAP////8AAAAAAAD/////AAD//wAAAAAAAAAAAAD//wAAAAD//wAAAAAAAAAAAAAAAA==")
-}]
-blend_shape_mode = 0
-
-[sub_resource type="ArrayMesh" id="ArrayMesh_blpq5"]
-resource_name = "Sketchfab_Scene_Material-material3"
-_surfaces = [{
-"aabb": AABB(-0.230434, -1.94227, -2.34461, 0.230432, 2.00311, 4.68922),
-"attribute_data": PackedByteArray("TA2D+7Lyg/uy8nsETA17BLLyewSy8oP7TA2D+0wNewQVu6D3FbuXALGglwCxoKD3FbvfsBW7WEexoFhHsaDfsEC2QgJAtkr53JtK+dybQgIVu1hHFbvfsLGg37CxoFhH"),
-"format": 34896613399,
-"index_count": 36,
-"index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcA"),
-"material": SubResource("StandardMaterial3D_rkeoe"),
-"name": "Material",
-"primitive": 3,
-"uv_scale": Vector4(0, 0, 0, 0),
-"vertex_count": 24,
-"vertex_data": PackedByteArray("//8AAP//qir///////+qKv////8AAKoq//8AAAAAqioAAP//AABU1QAA/////1TVAAAAAP//VNUAAAAAAABU1f//AAD///8///8AAAAA/z8AAAAAAAD/PwAAAAD///8//////////n///wAA///+fwAAAAD///5/AAD//////n//////AAD/v/////////+/AAD//////78AAP//AAD/v///AAAAAP///////wAA//8AAP//AAD//wAAAAAAAP//qiqqKqoqqiqqKqoqqiqqKlTVVNVU1VTVVNVU1VTVVNUAAP9/AAD/fwAA/38AAP9//3////9/////f////3///////3////9/////f////3////9/////f////3////9/")
-}]
-blend_shape_mode = 0
-shadow_mesh = SubResource("ArrayMesh_hvris")
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_p4tie"]
 _surfaces = [{
@@ -580,6 +549,9 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_o2sw2")
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_srdpm"]
+size = Vector3(80.289, 35.1513, 12.5311)
+
 [sub_resource type="ArrayMesh" id="ArrayMesh_g0gk2"]
 _surfaces = [{
 "aabb": AABB(-26.0166, -1.3494, -0.681531, 52.0326, 6.18301, 1.36306),
@@ -868,6 +840,74 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_yjolx")
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_lfn73"]
+size = Vector3(81.2654, 5.86112, 2.51764)
+
+[sub_resource type="Animation" id="Animation_j4qky"]
+resource_name = "Caida"
+length = 0.6
+step = 0.1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("../..:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(-78.7208, 85.9498, 3.48151), Vector3(-58.1404, 53.5695, 68.2483), Vector3(-57.678, 52.4954, 88.6749), Vector3(-57.678, 52.4954, 77.1403), Vector3(-57.678, 52.4954, 88.6749)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("../..:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(-3.76348e-14, 9.42152e-15, -0.523599), Vector3(2.18167e-08, -0.523599, -0.523599), Vector3(-1.77636e-15, -3.07674e-15, -0.523599), Vector3(0, 0.216421, -0.523599), Vector3(-1.77636e-15, -3.07674e-15, -0.523599)]
+}
+
+[sub_resource type="Animation" id="Animation_btxc6"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("../..:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 0, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("../..:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 0, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_oh8f5"]
+_data = {
+&"Caida": SubResource("Animation_j4qky"),
+&"RESET": SubResource("Animation_btxc6")
+}
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_p8hqm"]
+size = Vector3(68.8992, 31.7895, 106.343)
+
 [node name="Sketchfab_Scene" type="Node3D"]
 
 [node name="Sketchfab_model" type="Node3D" parent="."]
@@ -946,13 +986,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.353271, -0.174164, 0.30419
 shape = SubResource("BoxShape3D_2ofh7")
 
 [node name="Timer" type="Timer" parent="Sketchfab_model/Collada visual scene group/Cube_006/Area3D"]
-
-[node name="Cube_008" type="Node3D" parent="Sketchfab_model/Collada visual scene group"]
-transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 8.619, 3.87444, 0.370963)
-
-[node name="Material-material3" type="MeshInstance3D" parent="Sketchfab_model/Collada visual scene group/Cube_008"]
-mesh = SubResource("ArrayMesh_blpq5")
-skeleton = NodePath("")
 
 [node name="Cylinder" type="Node3D" parent="Sketchfab_model/Collada visual scene group"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.32843, 5.43399, 2.98428)
@@ -1085,11 +1118,18 @@ mesh = SubResource("ArrayMesh_rq7oh")
 skeleton = NodePath("")
 
 [node name="Cube_022" type="Node3D" parent="Sketchfab_model/Collada visual scene group"]
-transform = Transform3D(0.0252121, -0.0114278, 0.0597674, -0.0271921, -0.0599914, 3.59501e-09, 0.0544364, -0.0246742, -0.0276811, 6.59906, 8.20687, 0.347094)
+transform = Transform3D(0.0252121, -0.0114278, 0.0597674, -0.0271921, -0.0599914, 3.59501e-09, 0.0544364, -0.0246742, -0.0276811, 6.58261, 8.16863, 0.327572)
 
 [node name="Material_001-material7" type="MeshInstance3D" parent="Sketchfab_model/Collada visual scene group/Cube_022"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, 0)
 mesh = SubResource("ArrayMesh_k1cgt")
 skeleton = NodePath("")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/Collada visual scene group/Cube_022/Material_001-material7"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/Collada visual scene group/Cube_022/Material_001-material7/StaticBody3D"]
+transform = Transform3D(-0.920408, -0.378734, 0.0970801, 0.375161, -0.925419, -0.0534862, 0.110094, -0.0128113, 0.993838, 0.242802, -1.04849, -1.88698)
+shape = SubResource("BoxShape3D_srdpm")
 
 [node name="Cube_001" type="Node3D" parent="Sketchfab_model/Collada visual scene group"]
 transform = Transform3D(0.0657803, -0.00336747, 8.2634e-09, -8.21249e-09, 1.20587e-09, 0.0658664, -0.00336747, -0.0657803, 7.84422e-10, 2.70445, 12.3328, 1.55666)
@@ -1154,9 +1194,31 @@ transform = Transform3D(-0.0542026, -0.0374227, -1.253e-08, -0.0374227, 0.054202
 mesh = SubResource("ArrayMesh_xk42n")
 skeleton = NodePath("")
 
+[node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/Collada visual scene group/Cube_012/Material_001-material16"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/Collada visual scene group/Cube_012/Material_001-material16/StaticBody3D"]
+transform = Transform3D(0.999999, 0, 2.20268e-13, 0, 0.999999, 1.24345e-13, -3.55271e-15, -4.82814e-12, 1.00003, -0.51918, 1.61236, 0.190651)
+shape = SubResource("BoxShape3D_lfn73")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Sketchfab_model/Collada visual scene group/Cube_012/Material_001-material16/StaticBody3D/CollisionShape3D"]
+libraries = {
+&"": SubResource("AnimationLibrary_oh8f5")
+}
+
+[node name="AreadeMadera" type="Area3D" parent="Sketchfab_model/Collada visual scene group/Cube_012" node_paths=PackedStringArray("nodo_madera_a_animar", "animador_madera")]
+transform = Transform3D(0.866026, 0.5, -1.06581e-14, -0.5, 0.866026, 0, 0, -2.4869e-14, 1, -57.678, 52.4954, 88.6749)
+script = ExtResource("7_cike5")
+nodo_madera_a_animar = NodePath("..")
+animador_madera = NodePath("../Material_001-material16/StaticBody3D/CollisionShape3D/AnimationPlayer")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/Collada visual scene group/Cube_012/AreadeMadera"]
+transform = Transform3D(-0.906305, -0.422618, -4.05009e-13, 0.422617, -0.906308, 4.36629e-12, -1.93623e-12, -1.51157e-13, 0.999853, 4.64078, 48.1049, -34.6259)
+shape = SubResource("BoxShape3D_p8hqm")
+
 [connection signal="body_entered" from="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta" to="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta" method="_on_body_entered"]
 [connection signal="body_exited" from="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta" to="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta" method="_on_body_exited"]
 [connection signal="timeout" from="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta/Timer" to="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta" method="_on_timer_2_timeout"]
 [connection signal="body_entered" from="Sketchfab_model/Collada visual scene group/Cube_006/Area3D" to="Sketchfab_model/Collada visual scene group/Cube_006/Area3D" method="_on_body_entered"]
 [connection signal="body_exited" from="Sketchfab_model/Collada visual scene group/Cube_006/Area3D" to="Sketchfab_model/Collada visual scene group/Cube_006/Area3D" method="_on_body_exited"]
 [connection signal="timeout" from="Sketchfab_model/Collada visual scene group/Cube_006/Area3D/Timer" to="Sketchfab_model/Collada visual scene group/Cube_006/Area3D" method="_on_timer_timeout"]
+[connection signal="body_entered" from="Sketchfab_model/Collada visual scene group/Cube_012/AreadeMadera" to="Sketchfab_model/Collada visual scene group/Cube_012/AreadeMadera" method="_on_body_entered"]

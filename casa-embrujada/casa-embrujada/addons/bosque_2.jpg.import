@@ -1,0 +1,38 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://dy4e401cetuo7"
+path.s3tc="res://.godot/imported/bosque_2.jpg-fd8be7e75075ab593a13cb1fd180de67.s3tc.ctex"
+metadata={
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
+}
+generator_parameters={
+"md5": "7f943e25c169c975dec139da17a99881"
+}
+
+[deps]
+
+source_file="res://addons/bosque_2.jpg"
+dest_files=["res://.godot/imported/bosque_2.jpg-fd8be7e75075ab593a13cb1fd180de67.s3tc.ctex"]
+
+[params]
+
+compress/mode=2
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/hdr_compression=1
+compress/normal_map=0
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=0
+roughness/src_normal=""
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=0
