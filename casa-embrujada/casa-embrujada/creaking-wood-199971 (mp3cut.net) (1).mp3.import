@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://lcxe3l703wl1"
+path="res://.godot/imported/creaking-wood-199971 (mp3cut.net) (1).mp3-0f122a69e3b280b614df9d38d7745382.mp3str"
+
+[deps]
+
+source_file="res://creaking-wood-199971 (mp3cut.net) (1).mp3"
+dest_files=["res://.godot/imported/creaking-wood-199971 (mp3cut.net) (1).mp3-0f122a69e3b280b614df9d38d7745382.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

@@ -1,4 +1,4 @@
-[gd_scene load_steps=76 format=4 uid="uid://db5v67cx3fis3"]
+[gd_scene load_steps=78 format=4 uid="uid://db5v67cx3fis3"]
 
 [ext_resource type="Texture2D" uid="uid://cnkd7y8tp2dud" path="res://cabana_1.jpg" id="1_2x2vl"]
 [ext_resource type="Texture2D" uid="uid://0nx1w2wle6hh" path="res://cabana_3.jpg" id="2_w8wig"]
@@ -6,6 +6,8 @@
 [ext_resource type="Script" uid="uid://bg1vwh2r135re" path="res://area_detection_puerta.gd" id="3_w8wig"]
 [ext_resource type="Script" uid="uid://dkt4dmh03ellw" path="res://area_3d.gd" id="4_bnieh"]
 [ext_resource type="Texture2D" uid="uid://dqodlxct5wsn5" path="res://cabana_2.jpg" id="4_cike5"]
+[ext_resource type="AudioStream" uid="uid://cmrvc7na3p0xx" path="res://creaking-wood-199971 (mp3cut.net) (2).mp3" id="4_srdpm"]
+[ext_resource type="AudioStream" uid="uid://lcxe3l703wl1" path="res://creaking-wood-199971 (mp3cut.net) (1).mp3" id="5_srdpm"]
 [ext_resource type="Script" uid="uid://0wpyeobl1p8c" path="res://area_de_madera.gd" id="7_cike5"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p0vth"]
@@ -87,6 +89,9 @@ shadow_mesh = SubResource("ArrayMesh_qbu6g")
 [sub_resource type="BoxShape3D" id="BoxShape3D_2x2vl"]
 size = Vector3(0.27832, 2.17528, 4.82642)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_bnieh"]
+size = Vector3(4.19226, 4.74066, 6.7937)
+
 [sub_resource type="Animation" id="Animation_w8wig"]
 resource_name = "Open"
 length = 1.7
@@ -124,9 +129,6 @@ _data = {
 &"Open": SubResource("Animation_w8wig"),
 &"RESET": SubResource("Animation_bnieh")
 }
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_bnieh"]
-size = Vector3(4.19226, 4.74066, 6.7937)
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_53uf5"]
 _surfaces = [{
@@ -935,21 +937,27 @@ skeleton = NodePath("")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0859375, -0.932961, -0.0211182)
 shape = SubResource("BoxShape3D_2x2vl")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="Sketchfab_model/Collada visual scene group/Cube_007/Door"]
-libraries = {
-&"": SubResource("AnimationLibrary_cike5")
-}
-
-[node name="AreaDetectionPuerta" type="Area3D" parent="Sketchfab_model/Collada visual scene group/Cube_007" node_paths=PackedStringArray("nodo_puerta", "animador_puerta")]
+[node name="AreaDetectionPuerta" type="Area3D" parent="Sketchfab_model/Collada visual scene group/Cube_007" node_paths=PackedStringArray("nodo_puerta1", "animador_puerta1", "audio_puerta_player1")]
 script = ExtResource("3_w8wig")
-nodo_puerta = NodePath("..")
-animador_puerta = NodePath("../Door/AnimationPlayer")
+nodo_puerta1 = NodePath("..")
+animador_puerta1 = NodePath("../AnimationPlayer")
+audio_puerta_player1 = NodePath("../AudioStreamPlayer")
+sonido_abrir_puerta1 = ExtResource("4_srdpm")
+sonido_cerrar_puerta1 = ExtResource("5_srdpm")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.393696, -1.63541, 0.775024)
 shape = SubResource("BoxShape3D_bnieh")
 
 [node name="Timer" type="Timer" parent="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta"]
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Sketchfab_model/Collada visual scene group/Cube_007"]
+root_node = NodePath("../Door")
+libraries = {
+&"": SubResource("AnimationLibrary_cike5")
+}
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="Sketchfab_model/Collada visual scene group/Cube_007"]
 
 [node name="Cube_002" type="Node3D" parent="Sketchfab_model/Collada visual scene group"]
 transform = Transform3D(0.579316, 0, 0, 0, -1, 0, 0, 0, 1, -0.552449, 3.39532, 1.63049)
@@ -976,10 +984,13 @@ libraries = {
 &"": SubResource("AnimationLibrary_lfn73")
 }
 
-[node name="Area3D" type="Area3D" parent="Sketchfab_model/Collada visual scene group/Cube_006" node_paths=PackedStringArray("nodo_puerta", "animador_puerta")]
+[node name="Area3D" type="Area3D" parent="Sketchfab_model/Collada visual scene group/Cube_006" node_paths=PackedStringArray("nodo_puerta", "animador_puerta", "audio_puerta_player")]
 script = ExtResource("4_bnieh")
 nodo_puerta = NodePath("..")
 animador_puerta = NodePath("../StaticBody3D/AnimationPlayer")
+audio_puerta_player = NodePath("../../Cube_007/AudioStreamPlayer")
+sonido_abrir_puerta = ExtResource("4_srdpm")
+sonido_cerrar_puerta = ExtResource("5_srdpm")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/Collada visual scene group/Cube_006/Area3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.353271, -0.174164, 0.304199)
@@ -1217,8 +1228,8 @@ shape = SubResource("BoxShape3D_p8hqm")
 
 [connection signal="body_entered" from="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta" to="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta" method="_on_body_entered"]
 [connection signal="body_exited" from="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta" to="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta" method="_on_body_exited"]
-[connection signal="timeout" from="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta/Timer" to="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta" method="_on_timer_2_timeout"]
+[connection signal="timeout" from="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta/Timer" to="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta" method="_on_Timer_timeout"]
 [connection signal="body_entered" from="Sketchfab_model/Collada visual scene group/Cube_006/Area3D" to="Sketchfab_model/Collada visual scene group/Cube_006/Area3D" method="_on_body_entered"]
 [connection signal="body_exited" from="Sketchfab_model/Collada visual scene group/Cube_006/Area3D" to="Sketchfab_model/Collada visual scene group/Cube_006/Area3D" method="_on_body_exited"]
-[connection signal="timeout" from="Sketchfab_model/Collada visual scene group/Cube_006/Area3D/Timer" to="Sketchfab_model/Collada visual scene group/Cube_006/Area3D" method="_on_timer_timeout"]
+[connection signal="timeout" from="Sketchfab_model/Collada visual scene group/Cube_006/Area3D/Timer" to="Sketchfab_model/Collada visual scene group/Cube_006/Area3D" method="_on_Timer_timeout"]
 [connection signal="body_entered" from="Sketchfab_model/Collada visual scene group/Cube_012/AreadeMadera" to="Sketchfab_model/Collada visual scene group/Cube_012/AreadeMadera" method="_on_body_entered"]
