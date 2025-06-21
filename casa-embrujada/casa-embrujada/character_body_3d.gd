@@ -1,7 +1,7 @@
 extends CharacterBody3D
 
 # --- PROPIEDADES EXPORTADAS (AJUSTABLES EN EL EDITOR) ---
-@export var speed: float = 5.0 # Velocidad de movimiento (metros por segundo)
+@export var speed: float = 10.0 # Velocidad de movimiento (metros por segundo)
 @export var jump_velocity: float = 4.5 # Fuerza de salto
 @export var mouse_sensitivity: float = 0.002 # Sensibilidad del ratón para mirar
 

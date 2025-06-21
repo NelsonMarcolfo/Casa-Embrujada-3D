@@ -6,8 +6,8 @@
 [ext_resource type="Script" uid="uid://bg1vwh2r135re" path="res://area_detection_puerta.gd" id="3_w8wig"]
 [ext_resource type="Script" uid="uid://dkt4dmh03ellw" path="res://area_3d.gd" id="4_bnieh"]
 [ext_resource type="Texture2D" uid="uid://dqodlxct5wsn5" path="res://cabana_2.jpg" id="4_cike5"]
-[ext_resource type="AudioStream" uid="uid://cmrvc7na3p0xx" path="res://creaking-wood-199971 (mp3cut.net) (2).mp3" id="4_srdpm"]
-[ext_resource type="AudioStream" uid="uid://lcxe3l703wl1" path="res://creaking-wood-199971 (mp3cut.net) (1).mp3" id="5_srdpm"]
+[ext_resource type="AudioStream" uid="uid://m8gyir6ogy8q" path="res://music/creaking-wood-199971 (mp3cut.net) (2).mp3" id="4_srdpm"]
+[ext_resource type="AudioStream" uid="uid://cp5hqasmiougu" path="res://music/chirrido-de-puerta-335976.mp3" id="5_lfn73"]
 [ext_resource type="Script" uid="uid://0wpyeobl1p8c" path="res://area_de_madera.gd" id="7_cike5"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p0vth"]
@@ -311,7 +311,7 @@ blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_lqbst")
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_r57si"]
-size = Vector3(24.7852, 14.3794, 0.640076)
+size = Vector3(24.7852, 14.3794, 0.602279)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_w8wig"]
 size = Vector3(0.523071, 10.9166, 5.76587)
@@ -943,7 +943,7 @@ nodo_puerta1 = NodePath("..")
 animador_puerta1 = NodePath("../AnimationPlayer")
 audio_puerta_player1 = NodePath("../AudioStreamPlayer")
 sonido_abrir_puerta1 = ExtResource("4_srdpm")
-sonido_cerrar_puerta1 = ExtResource("5_srdpm")
+sonido_cerrar_puerta1 = ExtResource("5_lfn73")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.393696, -1.63541, 0.775024)
@@ -958,6 +958,7 @@ libraries = {
 }
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="Sketchfab_model/Collada visual scene group/Cube_007"]
+stream = ExtResource("4_srdpm")
 
 [node name="Cube_002" type="Node3D" parent="Sketchfab_model/Collada visual scene group"]
 transform = Transform3D(0.579316, 0, 0, 0, -1, 0, 0, 0, 1, -0.552449, 3.39532, 1.63049)
@@ -990,7 +991,7 @@ nodo_puerta = NodePath("..")
 animador_puerta = NodePath("../StaticBody3D/AnimationPlayer")
 audio_puerta_player = NodePath("../../Cube_007/AudioStreamPlayer")
 sonido_abrir_puerta = ExtResource("4_srdpm")
-sonido_cerrar_puerta = ExtResource("5_srdpm")
+sonido_cerrar_puerta = ExtResource("5_lfn73")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/Collada visual scene group/Cube_006/Area3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.353271, -0.174164, 0.304199)
@@ -1050,7 +1051,7 @@ shape = SubResource("BoxShape3D_2oyq3")
 transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, -1.74846e-07, 1.74846e-07, -7.64274e-15, 1, -16.2677, 2.03354, -1.43805)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/Collada visual scene group/Cylinder/Material_002-material3/StaticBody3D6/StaticBody3D6"]
-transform = Transform3D(0.17, -1.42109e-14, 1.07463e-15, 0, 2.5, 0, 8.22176e-16, 0, 1, -7.13666, -21.9269, 0.635788)
+transform = Transform3D(0.17, -1.42109e-14, 1.07467e-15, -8.88178e-16, 2.5, 0, -9.54173e-16, -2.84217e-14, 1, -7.13666, -21.3198, 0.635788)
 shape = SubResource("BoxShape3D_2oyq3")
 
 [node name="StaticBody3D7" type="StaticBody3D" parent="Sketchfab_model/Collada visual scene group/Cylinder/Material_002-material3"]
@@ -1067,7 +1068,7 @@ skeleton = NodePath("")
 [node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/Collada visual scene group/Cylinder/Material_001-material"]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/Collada visual scene group/Cylinder/Material_001-material/StaticBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.593155, 0.273194, -5.09695)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.593155, 0.273194, -5.11585)
 shape = SubResource("BoxShape3D_r57si")
 
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="Sketchfab_model/Collada visual scene group/Cylinder/Material_001-material/StaticBody3D"]

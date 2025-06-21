@@ -1,0 +1,71 @@
+[gd_scene load_steps=5 format=3 uid="uid://bqnnuf52divey"]
+
+[ext_resource type="Texture2D" uid="uid://c147np3x4npju" path="res://bosque_2.jpg" id="1_wm4b4"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_qbq3j"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ragr8"]
+albedo_color = Color(0.497979, 0.583753, 0.637733, 1)
+albedo_texture = ExtResource("1_wm4b4")
+roughness = 0.94
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_sr8py"]
+size = Vector3(0.384888, 0.5, 0.402771)
+
+[node name="Floor" type="Node3D"]
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+transform = Transform3D(20, 0, 0, 0, 20, 0, 0, 0, 20, 3.35305, -0.324588, -6.86372)
+layers = 2
+mesh = SubResource("PlaneMesh_qbq3j")
+surface_material_override/0 = SubResource("StandardMaterial3D_ragr8")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Floor"]
+disable_mode = 1
+collision_layer = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor/StaticBody3D"]
+transform = Transform3D(5, 0, 0, 0, 0.1, 0, 0, 0, 5, 0.0222779, -0.020512, -0.0114441)
+shape = SubResource("BoxShape3D_sr8py")
+
+[node name="Floor" type="MeshInstance3D" parent="Floor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.67914, 0.00041711, -0.00599234)
+layers = 2
+mesh = SubResource("PlaneMesh_qbq3j")
+surface_material_override/0 = SubResource("StandardMaterial3D_ragr8")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Floor/Floor"]
+disable_mode = 1
+collision_layer = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor/Floor/StaticBody3D"]
+transform = Transform3D(5, 0, 0, 0, 0.1, 0, 0, 0, 5, 0.0690629, -0.0200928, -0.00870499)
+shape = SubResource("BoxShape3D_sr8py")
+
+[node name="Floor2" type="MeshInstance3D" parent="."]
+transform = Transform3D(20, 0, 0, 0, 20, 0, 0, 0, 20, 3.35305, -0.324588, -44.9331)
+layers = 2
+mesh = SubResource("PlaneMesh_qbq3j")
+surface_material_override/0 = SubResource("StandardMaterial3D_ragr8")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Floor2"]
+disable_mode = 1
+collision_layer = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor2/StaticBody3D"]
+transform = Transform3D(5, 0, 0, 0, 0.1, 0, 0, 0, 5, -0.00574748, -0.0227292, -0.0114441)
+shape = SubResource("BoxShape3D_sr8py")
+
+[node name="Floor3" type="MeshInstance3D" parent="."]
+transform = Transform3D(20, 0, 0, 0, 20, 0, 0, 0, 20, 37.0902, -0.324588, -44.8017)
+layers = 2
+mesh = SubResource("PlaneMesh_qbq3j")
+surface_material_override/0 = SubResource("StandardMaterial3D_ragr8")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Floor3"]
+disable_mode = 1
+collision_layer = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor3/StaticBody3D"]
+transform = Transform3D(5, 0, 0, 0, 0.1, 0, 0, 0, 5, 0.0647249, -0.021803, -0.0114441)
+shape = SubResource("BoxShape3D_sr8py")
