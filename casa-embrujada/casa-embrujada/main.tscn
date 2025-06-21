@@ -1,24 +1,25 @@
-[gd_scene load_steps=25 format=3 uid="uid://dwca48mcy6ub6"]
+[gd_scene load_steps=23 format=3 uid="uid://dwca48mcy6ub6"]
 
-[ext_resource type="Texture2D" uid="uid://dy3ic543wsw06" path="res://137222_header_small.jpg" id="1_0xm2m"]
 [ext_resource type="PackedScene" uid="uid://1jgufjci7crx" path="res://mesita.glb" id="1_kek77"]
 [ext_resource type="PackedScene" uid="uid://bdtkmgxrfxu2w" path="res://player.tscn" id="2_0xm2m"]
 [ext_resource type="PackedScene" uid="uid://dt5u4j72b440j" path="res://phenny.glb" id="2_4c57u"]
 [ext_resource type="PackedScene" uid="uid://cjbuyhglf7hq0" path="res://raton.tscn" id="3_4c57u"]
 [ext_resource type="PackedScene" uid="uid://db5v67cx3fis3" path="res://sketchfab_scene.tscn" id="3_h2yge"]
-[ext_resource type="AudioStream" uid="uid://cu6jvr5gej0b3" path="res://SONIDO DE VIENTO (NEBLINA) MIEDO  Efecto de sonido.mp3" id="4_1bvp3"]
 [ext_resource type="PackedScene" uid="uid://3nb6f2y3jxc0" path="res://Muerte.tscn" id="4_ycdy4"]
-[ext_resource type="PackedScene" uid="uid://ceogn3eutnt56" path="res://bosque.tscn" id="5_lquwl"]
 [ext_resource type="PackedScene" uid="uid://dm7yl1cmw5hgh" path="res://sangre.glb" id="5_w48qg"]
 [ext_resource type="PackedScene" uid="uid://cslhc66eqb77g" path="res://NONO.glb" id="6_272bh"]
 [ext_resource type="PackedScene" uid="uid://be68q41suih71" path="res://smile.glb" id="7_5vw27"]
 [ext_resource type="Script" uid="uid://ecudfsedxiet" path="res://Area.gd" id="8_cegan"]
-[ext_resource type="AudioStream" uid="uid://c80bo58hs5gvk" path="res://footsteps-on-wood-floor-14735.mp3" id="9_82xsv"]
+[ext_resource type="AudioStream" uid="uid://cqea116cmuhyk" path="res://music/footsteps-on-wood-floor-14735.mp3" id="9_cegan"]
+[ext_resource type="AudioStream" uid="uid://bc1i5udv6a76w" path="res://music/SONIDO DE VIENTO (NEBLINA) MIEDO  Efecto de sonido.mp3" id="11_82xsv"]
 [ext_resource type="PackedScene" uid="uid://d0uh8fguetoxx" path="res://demon.glb" id="11_efxa6"]
 [ext_resource type="PackedScene" uid="uid://dhbcjq3o16ewc" path="res://lobo.glb" id="12_dg77c"]
+[ext_resource type="PackedScene" uid="uid://d2a7sf11urqu0" path="res://Camino.tscn" id="15_cegan"]
 [ext_resource type="PackedScene" uid="uid://pyr2mc0t1ibg" path="res://hand.glb" id="15_vivmo"]
 [ext_resource type="PackedScene" uid="uid://d2dqtbnrapipu" path="res://rasgunios.glb" id="16_2cqfq"]
 [ext_resource type="PackedScene" uid="uid://bgg1577j3ne87" path="res://dragon.glb" id="17_yaehf"]
+[ext_resource type="PackedScene" uid="uid://bqnnuf52divey" path="res://Floor.tscn" id="19_82xsv"]
+[ext_resource type="PackedScene" uid="uid://cgtm7ptkviey8" path="res://arboles.tscn" id="20_82xsv"]
 
 [sub_resource type="Environment" id="Environment_0xm2m"]
 background_mode = 1
@@ -30,15 +31,6 @@ fog_light_color = Color(0.114897, 0.114897, 0.114897, 1)
 fog_light_energy = 0.3
 fog_density = 1.0
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_h2yge"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1bvp3"]
-albedo_color = Color(0.497979, 0.583753, 0.637733, 1)
-albedo_texture = ExtResource("1_0xm2m")
-roughness = 0.94
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_0xm2m"]
-
 [sub_resource type="BoxShape3D" id="BoxShape3D_getpj"]
 size = Vector3(23.5336, 6.12469, 12.2377)
 
@@ -47,123 +39,163 @@ size = Vector3(23.5336, 6.12469, 12.2377)
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_0xm2m")
 
-[node name="Sketchfab_Scene" parent="WorldEnvironment" instance=ExtResource("1_kek77")]
-transform = Transform3D(2.99662, 0.142261, 0, -0.142261, 2.99662, 0, 0, 0, 3, 7.65271, 0.16916, -11.6418)
+[node name="Cabaña" parent="." instance=ExtResource("3_h2yge")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 59.4262, 1.26844, -6.9187)
 
-[node name="Sketchfab_Scene2" parent="WorldEnvironment" instance=ExtResource("2_4c57u")]
-transform = Transform3D(1.08654, -0.0207102, -1.03393, -0.00583096, 1.49955, -0.0361645, 1.03412, 0.0302152, 1.08613, 7.79211, 2.47741, -11.7147)
+[node name="NONO" parent="Cabaña" instance=ExtResource("6_272bh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.292657, 1.30969, -7.72957)
 
-[node name="Node3D" parent="WorldEnvironment" instance=ExtResource("3_4c57u")]
-transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 59.032, 0.729987, -69.3696)
+[node name="smile" parent="Cabaña" instance=ExtResource("7_5vw27")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 10.9765, 2.15841, -2.42458)
 
-[node name="Node3D2" parent="WorldEnvironment" instance=ExtResource("4_ycdy4")]
-transform = Transform3D(0.24431, 0.0361836, 3.49128, -0.0116621, 3.4998, -0.0354559, -3.49144, -0.0091581, 0.244417, -0.683177, 0.485936, -0.950577)
+[node name="Mesa2" parent="Cabaña" instance=ExtResource("1_kek77")]
+transform = Transform3D(-2.77644, 0, -1.13638, 0, 3, 0, 1.13638, 0, -2.77644, 0.01867, -1.76803, 0.580994)
 
-[node name="sangre" parent="WorldEnvironment" instance=ExtResource("5_w48qg")]
-transform = Transform3D(-2.99624, 0.150158, 0, -0.150158, -2.99624, 0, 0, 0, 3, -2.49559, 8.22341, -6.72872)
+[node name="It2" parent="Cabaña" instance=ExtResource("2_4c57u")]
+transform = Transform3D(-1.40682, 0.0568429, 1.42043, 0.0999183, 1.99741, 0.0190283, -1.41805, 0.0843482, -1.40784, 0.037426, 0.78138, 0.481416)
 
-[node name="sangre2" parent="WorldEnvironment" instance=ExtResource("5_w48qg")]
-transform = Transform3D(1.54189, -0.914326, -0.886896, -0.874386, -1.77234, 0.307015, -0.926297, 0.151053, -1.76611, -2.85202, 7.53623, -2.60531)
+[node name="Mesa3" parent="Cabaña" instance=ExtResource("1_kek77")]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 8.62567, -1.64902, -11.6398)
 
-[node name="Floor" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.35226, -0.98109, 0.326423)
-layers = 2
-mesh = SubResource("PlaneMesh_h2yge")
-surface_material_override/0 = SubResource("StandardMaterial3D_1bvp3")
+[node name="demon" parent="Cabaña" instance=ExtResource("11_efxa6")]
+transform = Transform3D(0.665761, -0.00171718, -0.746163, -0.0323922, 0.998988, -0.0312008, 0.745462, 0.0449422, 0.665031, 8.74536, 0.47396, -11.4373)
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Floor"]
-disable_mode = 1
-collision_layer = 2
+[node name="demon2" parent="Cabaña" instance=ExtResource("11_efxa6")]
+transform = Transform3D(-0.998939, 0, -0.0460604, 0, 1, 0, 0.0460604, 0, -0.998939, 19.0583, 1.1587, -5.21309)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor/StaticBody3D"]
-transform = Transform3D(5, 0, 0, 0, 0.1, 0, 0, 0, 5, 0, 0, 0)
-shape = SubResource("BoxShape3D_0xm2m")
+[node name="hand" parent="Cabaña" instance=ExtResource("15_vivmo")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.986279, 1.09276, -8.77813)
 
-[node name="Player" parent="." instance=ExtResource("2_0xm2m")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.29718, 18.2407, 0.46899)
-script = null
+[node name="rasgunios" parent="Cabaña" instance=ExtResource("16_2cqfq")]
+transform = Transform3D(-0.276987, -0.0178751, -3.99036, 0.0663312, 3.99939, -0.0225199, 3.98985, -0.0677308, -0.276649, 3.44872, 1.14292, 0.911806)
 
-[node name="Area3D" type="Area3D" parent="Player" node_paths=PackedStringArray("sonido_pasos_ambiente_player")]
+[node name="hand2" parent="Cabaña" instance=ExtResource("15_vivmo")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.4782, 0.22549, -5.93631)
+
+[node name="hand3" parent="Cabaña" instance=ExtResource("15_vivmo")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.3597, 0.0109501, -6.08975)
+
+[node name="hand4" parent="Cabaña" instance=ExtResource("15_vivmo")]
+transform = Transform3D(-0.0412479, 0, 0.999149, 0, 1, 0, -0.999149, 0, -0.0412479, 11.0394, 0.48171, -4.07501)
+
+[node name="rasgunios2" parent="Cabaña" instance=ExtResource("16_2cqfq")]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 8.30646, 1.71535, -7.93908)
+
+[node name="Dragon" parent="Cabaña" instance=ExtResource("17_yaehf")]
+transform = Transform3D(0.156472, -0.680704, -2.91756, -1.09973, 2.70454, -0.689983, 2.78678, 1.10549, -0.108467, -4.98311, 5.14978, -0.020589)
+
+[node name="Mesa" parent="Cabaña" instance=ExtResource("1_kek77")]
+transform = Transform3D(2.99662, 0.142261, 0, -0.142261, 2.99662, 0, 0, 0, 3, 7.28133, -1.82735, -11.7751)
+
+[node name="It" parent="Cabaña" instance=ExtResource("2_4c57u")]
+transform = Transform3D(1.08654, -0.0207102, -1.03393, -0.00583096, 1.49955, -0.0361645, 1.03412, 0.0302152, 1.08613, 7.42073, 0.4809, -11.848)
+
+[node name="sangre" parent="Cabaña" instance=ExtResource("5_w48qg")]
+transform = Transform3D(-2.99624, 0.150158, 0, -0.150158, -2.99624, 0, 0, 0, 3, -2.86697, 6.2269, -6.862)
+
+[node name="sangre2" parent="Cabaña" instance=ExtResource("5_w48qg")]
+transform = Transform3D(1.54189, -0.914326, -0.886896, -0.874386, -1.77234, 0.307015, -0.926297, 0.151053, -1.76611, -3.2234, 5.53972, -2.73859)
+
+[node name="Muerte" parent="Cabaña" instance=ExtResource("4_ycdy4")]
+transform = Transform3D(0.24431, 0.0361836, 3.49128, -0.0116621, 3.4998, -0.0354559, -3.49144, -0.0091581, 0.244417, -0.683178, -1.6923, -0.950577)
+
+[node name="Player" parent="Cabaña" instance=ExtResource("2_0xm2m")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -47.4807, -2.21005, 161.833)
+
+[node name="Area3D" type="Area3D" parent="Cabaña/Player" node_paths=PackedStringArray("sonido_pasos_ambiente_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 43.6335, 18.8763, -161.783)
 script = ExtResource("8_cegan")
 sonido_pasos_ambiente_player = NodePath("../AudioStreamPlayer")
-sonido_pasos_ambiente_clip = ExtResource("9_82xsv")
+sonido_pasos_ambiente_clip = ExtResource("9_cegan")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/Area3D"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Cabaña/Player/Area3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7914, -15.5408, -6.2851)
 shape = SubResource("BoxShape3D_getpj")
 
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="Player"]
-
-[node name="Sketchfab_Scene" parent="." instance=ExtResource("3_h2yge")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.371381, 1.99651, 0.133284)
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="Cabaña/Player"]
+stream = ExtResource("9_cegan")
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-stream = ExtResource("4_1bvp3")
+stream = ExtResource("11_82xsv")
 volume_db = 16.452
 pitch_scale = 1.74
 autoplay = true
 playback_type = 1
-parameters/looping = true
 
-[node name="Bosque" parent="." instance=ExtResource("5_lquwl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.22279, 3.75344, -39.2986)
+[node name="Camino" parent="." instance=ExtResource("15_cegan")]
+transform = Transform3D(-6.55671e-08, 0, -1.5, 0, 1.5, 0, 1.5, 0, -6.55671e-08, 95.1049, -0.920416, -38.8629)
 
-[node name="Bosque2" parent="." instance=ExtResource("5_lquwl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52.4091, 4.01066, 2.80112)
+[node name="Camino2" parent="Camino" instance=ExtResource("15_cegan")]
+transform = Transform3D(1.00938, 0, 0.0352485, 0, 1.01, 0, -0.0352485, 0, 1.00938, -15.7651, 0.000513792, -6.76249)
 
-[node name="Bosque3" parent="." instance=ExtResource("5_lquwl")]
-transform = Transform3D(-2.18557e-08, 0, -1, 0, 1, 0, 0.5, 0, -4.37114e-08, 19.6605, 4.11143, 17.8443)
+[node name="Camino3" parent="Camino" instance=ExtResource("15_cegan")]
+transform = Transform3D(-4.41485e-08, 0, 1.01, 0, 1.01, 0, -1.01, 0, -4.41485e-08, -37.0252, 0.000513792, -4.24086)
 
-[node name="Bosque4" parent="." instance=ExtResource("5_lquwl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52.2431, 3.8865, -43.1941)
+[node name="Camino4" parent="Camino" instance=ExtResource("15_cegan")]
+transform = Transform3D(-1.01, 0, -8.8297e-08, 0, 1.01, 0, 8.8297e-08, 0, -1.01, -50.6492, 0.000513792, 11.4841)
 
-[node name="Bosque5" parent="." instance=ExtResource("5_lquwl")]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 1, -13.9712, 3.59711, 14.5699)
+[node name="Camino5" parent="Camino" instance=ExtResource("15_cegan")]
+transform = Transform3D(1.00938, 0, 0.0352485, 0, 1.01, 0, -0.0352485, 0, 1.00938, -54.7995, 0.000513792, -2.35968)
 
-[node name="NONO" parent="." instance=ExtResource("6_272bh")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0787244, 3.3062, -7.59629)
+[node name="Camino6" parent="Camino" instance=ExtResource("15_cegan")]
+transform = Transform3D(1.01, 0, 0, 0, 1.01, 0, 0, 0, 1.01, -72.3068, 0.000513792, -7.70555)
 
-[node name="smile" parent="." instance=ExtResource("7_5vw27")]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 11.3479, 4.15492, -2.2913)
+[node name="Camino7" parent="Camino" instance=ExtResource("15_cegan")]
+transform = Transform3D(-1.01, 0, -8.8297e-08, 0, 1.01, 0, 8.8297e-08, 0, -1.01, 3.98836, 0.000513792, 13.8745)
 
-[node name="Sketchfab_Scene2" parent="." instance=ExtResource("1_kek77")]
-transform = Transform3D(-2.77644, 0, -1.13638, 0, 3, 0, 1.13638, 0, -2.77644, 0.390051, 0.228479, 0.714278)
+[node name="Camino8" parent="Camino" instance=ExtResource("15_cegan")]
+transform = Transform3D(1.01, 0, 0, 0, 1.01, 0, 0, 0, 1.01, 26.415, 0.000513792, 13.9213)
 
-[node name="Sketchfab_Scene3" parent="." instance=ExtResource("2_4c57u")]
-transform = Transform3D(-1.40682, 0.0568429, 1.42043, 0.0999183, 1.99741, 0.0190283, -1.41805, 0.0843482, -1.40784, 0.408807, 2.77789, 0.6147)
+[node name="Mickey" parent="." instance=ExtResource("3_4c57u")]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 59.032, -1.14081, -69.3696)
 
-[node name="Sketchfab_Scene4" parent="." instance=ExtResource("1_kek77")]
-transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 8.99705, 0.34749, -11.5065)
-
-[node name="demon" parent="." instance=ExtResource("11_efxa6")]
-transform = Transform3D(0.665761, -0.00171718, -0.746163, -0.0323922, 0.998988, -0.0312008, 0.745462, 0.0449422, 0.665031, 9.11674, 2.47047, -11.304)
-
-[node name="demon2" parent="." instance=ExtResource("11_efxa6")]
-transform = Transform3D(-0.998939, 0, -0.0460604, 0, 1, 0, 0.0460604, 0, -0.998939, 19.4297, 3.15521, -5.07981)
+[node name="Floor" parent="." instance=ExtResource("19_82xsv")]
+transform = Transform3D(3.5, 0, 0, 0, 3.5, 0, 0, 0, 3.5, -8.36312, 0.138197, 20.6613)
 
 [node name="lobo" parent="." instance=ExtResource("12_dg77c")]
-transform = Transform3D(2.5, 0, 0, 0, 2.5, 0, 0, 0, 2.5, -19.3589, 1.84166, -3.92434)
+transform = Transform3D(2.5, 0, 0, 0, 2.5, 0, 0, 0, 2.5, -19.7303, 0.233891, -4.05762)
 
-[node name="hand" parent="." instance=ExtResource("15_vivmo")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.614898, 3.08927, -8.64485)
+[node name="Arboles" parent="." instance=ExtResource("20_82xsv")]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 46.1256, -2.04109, -159.776)
 
-[node name="rasgunios" parent="." instance=ExtResource("16_2cqfq")]
-transform = Transform3D(-0.276987, -0.0178751, -3.99036, 0.0663312, 3.99939, -0.0225199, 3.98985, -0.0677308, -0.276649, 3.8201, 3.13943, 1.04509)
+[node name="Arboles" parent="Arboles" instance=ExtResource("20_82xsv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 331.882, 1.50434, 213.183)
 
-[node name="hand2" parent="." instance=ExtResource("15_vivmo")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.8496, 2.222, -5.80303)
+[node name="Arboles2" parent="Arboles" instance=ExtResource("20_82xsv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 363.04, -4.62689, -29.019)
 
-[node name="hand3" parent="." instance=ExtResource("15_vivmo")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.7311, 2.00746, -5.95647)
+[node name="Arboles3" parent="Arboles" instance=ExtResource("20_82xsv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 331.882, -4.62689, 595.929)
 
-[node name="hand4" parent="." instance=ExtResource("15_vivmo")]
-transform = Transform3D(-0.0412479, 0, 0.999149, 0, 1, 0, -0.999149, 0, -0.0412479, 11.4108, 2.47822, -3.94173)
+[node name="Arboles4" parent="Arboles" instance=ExtResource("20_82xsv")]
+transform = Transform3D(0.570714, 0, -0.821149, 0, 1, 0, 0.821149, 0, 0.570714, -43.6049, -4.62689, 323.515)
 
-[node name="rasgunios2" parent="." instance=ExtResource("16_2cqfq")]
-transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 8.67784, 3.71186, -7.8058)
+[node name="Arboles5" parent="Arboles" instance=ExtResource("20_82xsv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -337.17, 1.085, 105.856)
 
-[node name="Sketchfab_Scene5" parent="." instance=ExtResource("17_yaehf")]
-transform = Transform3D(0.156472, -0.680704, -2.91756, -1.09973, 2.70454, -0.689983, 2.78678, 1.10549, -0.108467, -4.61173, 7.14629, 0.112695)
+[node name="Arboles6" parent="Arboles" instance=ExtResource("20_82xsv")]
+transform = Transform3D(0.151261, 0, -0.988494, 0, 1, 0, 0.988494, 0, 0.151261, 354.944, 1.085, 823.836)
 
-[connection signal="body_entered" from="Player/Area3D" to="Player/Area3D" method="_on_body_entered"]
-[connection signal="body_exited" from="Player/Area3D" to="Player/Area3D" method="_on_body_exited"]
+[node name="Arboles7" parent="Arboles" instance=ExtResource("20_82xsv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -474.641, 1.085, 516.107)
+
+[node name="Arboles8" parent="Arboles" instance=ExtResource("20_82xsv")]
+transform = Transform3D(0.569279, 0, -0.822144, 0, 1, 0, 0.822144, 0, 0.569279, -389.934, 1.085, 818.763)
+
+[node name="Arboles9" parent="Arboles" instance=ExtResource("20_82xsv")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 40.3115, 1.085, 1105.02)
+
+[node name="Arboles10" parent="Arboles" instance=ExtResource("20_82xsv")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -78.1159, 1.085, 709.274)
+
+[node name="Arboles11" parent="Arboles" instance=ExtResource("20_82xsv")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -296.366, 1.085, 68.6546)
+
+[node name="Arboles12" parent="Arboles" instance=ExtResource("20_82xsv")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -369.228, 1.085, 317.88)
+
+[node name="Arboles13" parent="Arboles" instance=ExtResource("20_82xsv")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 367.134, 1.085, 934.293)
+
+[connection signal="body_entered" from="Cabaña/Player/Area3D" to="Cabaña/Player/Area3D" method="_on_body_entered"]
+[connection signal="body_exited" from="Cabaña/Player/Area3D" to="Cabaña/Player/Area3D" method="_on_body_exited"]
