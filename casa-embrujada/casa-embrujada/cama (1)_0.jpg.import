@@ -1,0 +1,38 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://0knxw6fh8hja"
+path.s3tc="res://.godot/imported/cama (1)_0.jpg-26d4f1be54481d5b0a56766248f232be.s3tc.ctex"
+metadata={
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
+}
+generator_parameters={
+"md5": "7d27c9057b7649d6f557af79e3fb2236"
+}
+
+[deps]
+
+source_file="res://cama (1)_0.jpg"
+dest_files=["res://.godot/imported/cama (1)_0.jpg-26d4f1be54481d5b0a56766248f232be.s3tc.ctex"]
+
+[params]
+
+compress/mode=2
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/hdr_compression=1
+compress/normal_map=0
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=0
+roughness/src_normal=""
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=0

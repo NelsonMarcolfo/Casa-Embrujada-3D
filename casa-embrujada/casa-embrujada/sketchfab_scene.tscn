@@ -1,4 +1,4 @@
-[gd_scene load_steps=78 format=4 uid="uid://db5v67cx3fis3"]
+[gd_scene load_steps=76 format=4 uid="uid://db5v67cx3fis3"]
 
 [ext_resource type="Texture2D" uid="uid://cnkd7y8tp2dud" path="res://cabana_1.jpg" id="1_2x2vl"]
 [ext_resource type="Texture2D" uid="uid://0nx1w2wle6hh" path="res://cabana_3.jpg" id="2_w8wig"]
@@ -6,8 +6,8 @@
 [ext_resource type="Script" uid="uid://bg1vwh2r135re" path="res://area_detection_puerta.gd" id="3_w8wig"]
 [ext_resource type="Script" uid="uid://dkt4dmh03ellw" path="res://area_3d.gd" id="4_bnieh"]
 [ext_resource type="Texture2D" uid="uid://dqodlxct5wsn5" path="res://cabana_2.jpg" id="4_cike5"]
-[ext_resource type="AudioStream" uid="uid://cmrvc7na3p0xx" path="res://creaking-wood-199971 (mp3cut.net) (2).mp3" id="4_srdpm"]
-[ext_resource type="AudioStream" uid="uid://lcxe3l703wl1" path="res://creaking-wood-199971 (mp3cut.net) (1).mp3" id="5_srdpm"]
+[ext_resource type="AudioStream" uid="uid://m8gyir6ogy8q" path="res://music/creaking-wood-199971 (mp3cut.net) (2).mp3" id="4_srdpm"]
+[ext_resource type="AudioStream" uid="uid://cp5hqasmiougu" path="res://music/chirrido-de-puerta-335976.mp3" id="5_lfn73"]
 [ext_resource type="Script" uid="uid://0wpyeobl1p8c" path="res://area_de_madera.gd" id="7_cike5"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p0vth"]
@@ -311,7 +311,7 @@ blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_lqbst")
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_r57si"]
-size = Vector3(24.7852, 14.3794, 0.640076)
+size = Vector3(24.7852, 14.3794, 0.426725)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_w8wig"]
 size = Vector3(0.523071, 10.9166, 5.76587)
@@ -390,38 +390,6 @@ _surfaces = [{
 }]
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_ahi7t")
-
-[sub_resource type="ArrayMesh" id="ArrayMesh_u7p87"]
-_surfaces = [{
-"aabb": AABB(-43.9474, -43.8409, -1.34213, 84.6327, 60.7097, 2.02366),
-"format": 34896613377,
-"index_count": 144,
-"index_data": PackedByteArray("AAABAAIAAAACAAMABAACAAEAAwACAAQABQABAAAAAwAFAAAABQAGAAEABAABAAYAAwAHAAUAAwAEAAcABwAGAAUABwAEAAYACAAJAAoACAAKAAsADAAKAAkACwAKAAwADQAJAAgACwANAAgADQAOAAkADAAJAA4ACwAPAA0ACwAMAA8ADwAOAA0ADwAMAA4AEAARABIAEAASABMAFAASABEAEwASABQAFQARABAAEwAVABAAFQAWABEAFAARABYAEwAXABUAEwAUABcAFwAWABUAFwAUABYAGAAZABoAGwAZABgAGgAZABwAGwAcABkAGgAcAB0AHgAcABsAHgAdABwAHwAbABgAHwAeABsAGAAaAB8AHwAdAB4AHwAaAB0A"),
-"name": "Material.001",
-"primitive": 3,
-"uv_scale": Vector4(0, 0, 0, 0),
-"vertex_count": 32,
-"vertex_data": PackedByteArray("3QlXtv//AADdCVe2kVMAAN0JFMqRUwAA3QkUyv//AAD//xTKkVMAAP//V7b//wAA//9XtpFTAAD//xTK//8AAFwM29NV+wAAXAzb0+dOAAAbFWLj504AABsVYuNV+wAAt9aGD+dOAAD5zQAAVPsAAPnNAADnTgAAt9aGD1T7AACjFnjwbqwAAKMWePAAAAAAYR///wAAAABhH///bqwAAP7gIywAAAAAQNicHG2sAABA2JwcAAAAAP7gIyxtrAAAAACL6+XgAAAAAIvreDQAAMYFkf14NAAAu+CcX+XgAAC74JxfdzQAAIHmoXF3NAAAgeahceXgAADGBZH95eAAAA==")
-}]
-blend_shape_mode = 0
-
-[sub_resource type="ArrayMesh" id="ArrayMesh_bcc6q"]
-resource_name = "Sketchfab_Scene_Material_001-material3"
-_surfaces = [{
-"aabb": AABB(-43.9474, -43.8409, -1.34213, 84.6327, 60.7097, 2.02366),
-"attribute_data": PackedByteArray("vH7s7bx+B/ibiAf4m4js7T447O0+OAf43+MH+N/j7O2Ck+ztgpMH+GGdB/hhneztXlTs7V5UB/j+/wf4///s7d/jSt0+OErdPjj+/9/j/v///0rdXlRK3V5U//////7/vH7s7bx+B/ibiAf4Pjjs7T44B/jf4wf4gpPs7YKTB/hhnQf4XlTs7V5UB/j+/wf4///s7d/jSt0+OErdPjj+/9/j/v///0rdXlRK3V5U//////7/vH7s7bx+B/ibiAf4Pjjs7T44B/jf4wf4gpPs7YKTB/hhnQf4XlTs7V5UB/j+/wf4///s7d/jSt0+OErdPjj+/9/j/v///0rdXlRK3V5U//////7/vH7s7bx+B/ibiAf4Pjjs7T44B/jf4wf4gpPs7YKTB/hhnQf4XlTs7V5UB/j+/wf4///s7T44St0+OP7/3+P+/9/jSt3//0rdXlRK3V5U//////7/vH7s7ZuIB/ibiOztPjjs7d/jB/jf4+ztgpPs7WGdB/hhneztvH7s7ZuIB/ibiOztPjjs7d/jB/jf4+ztgpPs7WGdB/hhneztvH7s7ZuIB/ibiOztPjjs7d/jB/jf4+ztgpPs7WGdB/hhnezt"),
-"format": 34896613399,
-"index_count": 144,
-"index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcAGAAZABoAGwAcAB0AHgAfACAAIQAiACMAIQAjACQAJQAmACcAJQAnACgAKQAqACsAKQArACwALQAuAC8AMAAxADIAMwA0ADUANgA3ADgANgA4ADkAOgA7ADwAOgA8AD0APgA/AEAAPgBAAEEAQgBDAEQARQBGAEcASABJAEoASwBMAE0ASwBNAE4ATwBQAFEATwBRAFIAUwBUAFUAUwBVAFYAVwBYAFkAWgBbAFwAXQBeAF8AYABhAGIAYwBkAGUAZgBnAGgAaQBqAGsAbABtAG4AbwBwAHEA"),
-"material": SubResource("StandardMaterial3D_jmsw5"),
-"name": "Material.001",
-"primitive": 3,
-"uv_scale": Vector4(4.55145, 1.29488, 0, 0),
-"vertex_count": 114,
-"vertex_data": PackedByteArray("3QlXtv//qirdCVe2kVOqKt0JFMqRU6oq3QkUyv//qirdCRTK////P90JFMqRU/8///8UypFT/z///xTK////P///FMr//6oq//8UypFTqir//1e2kVOqKv//V7b//6oq//9Xtv//AAD//1e2kVMAAN0JV7aRUwAA3QlXtv//AAD//xTKkVMAAN0JFMqRUwAA3QlXtpFTAAD//1e2kVMAAN0JFMr//wAA//8Uyv//AAD//1e2//8AAN0JV7b//wAAXAzb01X7KDhcDNvT504oOBsVYuPnTig4GxVi41X7pDsbFWLj506kO7fWhg/nTqQ7t9aGD1T7nhm31oYP506eGfnNAADnTp4Z+c0AAFT7/RL5zQAA5079ElwM29PnTv0SXAzb01X7/RK31oYP504AABsVYuPnTgAAXAzb0+dOAAD5zQAA504AABsVYuNV+x0bt9aGD1T7HRv5zQAAVPsdG1wM29NV+x0boxZ48G6sKDijFnjwAAAoOGEf//8AACg4YR///26spDthH///AACkO/7gIywAAKQ7/uAjLG2snhn+4CMsAACeGUDYnBwAAJ4ZQNicHG2s/RJA2JwcAAD9EqMWePAAAP0SoxZ48G6s/RL+4CMsAAAAAGEf//8AAAAAoxZ48AAAAABA2JwcAAAAAGEf//9urB0b/uAjLG2sHRtA2JwcbawdG6MWePBurB0bAACL6+XgwDMAAIvreDTAM8YFkf14NMAzxgWR/eXgOj7GBZH9eDQ6PoHmoXF3NDo+geahceXgLiCB5qFxdzQuILvgnF93NC4gu+CcX+XgDgy74JxfdzQODAAAi+t4NA4MAACL6+XgDgzGBZH9eDQAAAAAi+t4NAAAu+CcX3c0AACB5qFxdzQAAMYFkf3l4B0RgeahceXgHRG74Jxf5eAdEQAAi+vl4B0RXAzb01X7KDgbFWLj504oOBsVYuNV+yg4GxVi41X7pDu31oYP506kO7fWhg9U+6Q7t9aGD1T7nhn5zQAA506eGfnNAABU+54ZoxZ48G6sKDhhH///AAAoOGEf//9urCg4YR///26spDv+4CMsAACkO/7gIyxtrKQ7/uAjLG2snhlA2JwcAACeGUDYnBxtrJ4ZAACL6+XgwDPGBZH9eDTAM8YFkf3l4MAzxgWR/eXgOj6B5qFxdzQ6PoHmoXHl4Do+geahceXgLiC74JxfdzQuILvgnF/l4C4gVNVU1VTVVNVU1VTVVNVU1f///3////9/////f////3+qqlVVqqpUVaqqVVWqqlVV/3//P/9//z//f/8//3//P////3////9/////f////3//f/9//3//f/9//3//f/9/cOAcv3DgHL9w4By/rsvXZa7L12Wuy9dlCJmETAiZhEwImYRMbckj7W3JI+1tySPtbckj7R/fH18f3x9fH98fXx/fH1//////////////////////cOAcv3DgHL9w4By/rsvXZa7L12Wuy9dlCJmETAiZhEwImYRMbckj7W3JI+1tySPtbckj7R/fH18f3x9fH98fXx/fH1//////////////////////29tGyNvbRsjb20bIvNnebLzZ3my82d5sV5+rT1efq09Xn6tPKcaq8ynGqvMpxqrzKcaq84HpgWmB6YFpgemBaYHpgWn/////////////////////cOAcv3DgHL9w4By/rsvXZa7L12Wuy9dlCJmETAiZhEwImYRMcOAcv3DgHL9w4By/rsvXZa7L12Wuy9dlCJmETAiZhEwImYRM29tGyNvbRsjb20bIvNnebLzZ3my82d5sV5+rT1efq09Xn6tP")
-}]
-blend_shape_mode = 0
-shadow_mesh = SubResource("ArrayMesh_u7p87")
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_gdt8k"]
 _surfaces = [{
@@ -943,7 +911,7 @@ nodo_puerta1 = NodePath("..")
 animador_puerta1 = NodePath("../AnimationPlayer")
 audio_puerta_player1 = NodePath("../AudioStreamPlayer")
 sonido_abrir_puerta1 = ExtResource("4_srdpm")
-sonido_cerrar_puerta1 = ExtResource("5_srdpm")
+sonido_cerrar_puerta1 = ExtResource("5_lfn73")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/Collada visual scene group/Cube_007/AreaDetectionPuerta"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.393696, -1.63541, 0.775024)
@@ -958,6 +926,7 @@ libraries = {
 }
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="Sketchfab_model/Collada visual scene group/Cube_007"]
+stream = ExtResource("4_srdpm")
 
 [node name="Cube_002" type="Node3D" parent="Sketchfab_model/Collada visual scene group"]
 transform = Transform3D(0.579316, 0, 0, 0, -1, 0, 0, 0, 1, -0.552449, 3.39532, 1.63049)
@@ -990,7 +959,7 @@ nodo_puerta = NodePath("..")
 animador_puerta = NodePath("../StaticBody3D/AnimationPlayer")
 audio_puerta_player = NodePath("../../Cube_007/AudioStreamPlayer")
 sonido_abrir_puerta = ExtResource("4_srdpm")
-sonido_cerrar_puerta = ExtResource("5_srdpm")
+sonido_cerrar_puerta = ExtResource("5_lfn73")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/Collada visual scene group/Cube_006/Area3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.353271, -0.174164, 0.304199)
@@ -1050,7 +1019,7 @@ shape = SubResource("BoxShape3D_2oyq3")
 transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, -1.74846e-07, 1.74846e-07, -7.64274e-15, 1, -16.2677, 2.03354, -1.43805)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/Collada visual scene group/Cylinder/Material_002-material3/StaticBody3D6/StaticBody3D6"]
-transform = Transform3D(0.17, -1.42109e-14, 1.07463e-15, 0, 2.5, 0, 8.22176e-16, 0, 1, -7.13666, -21.9269, 0.635788)
+transform = Transform3D(0.17, -1.42109e-14, 1.07467e-15, -8.88178e-16, 2.5, 0, -9.54173e-16, -2.84217e-14, 1, -7.13666, -21.3198, 0.635788)
 shape = SubResource("BoxShape3D_2oyq3")
 
 [node name="StaticBody3D7" type="StaticBody3D" parent="Sketchfab_model/Collada visual scene group/Cylinder/Material_002-material3"]
@@ -1067,7 +1036,7 @@ skeleton = NodePath("")
 [node name="StaticBody3D" type="StaticBody3D" parent="Sketchfab_model/Collada visual scene group/Cylinder/Material_001-material"]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchfab_model/Collada visual scene group/Cylinder/Material_001-material/StaticBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.593155, 0.273194, -5.09695)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.593155, 0.273194, -5.17732)
 shape = SubResource("BoxShape3D_r57si")
 
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="Sketchfab_model/Collada visual scene group/Cylinder/Material_001-material/StaticBody3D"]
@@ -1094,18 +1063,15 @@ shape = SubResource("BoxShape3D_dhub7")
 debug_fill = false
 
 [node name="Cube_009" type="Node3D" parent="Sketchfab_model/Collada visual scene group"]
-transform = Transform3D(4.71581e-09, 6.55062e-09, -0.0658664, -0.0624628, -0.0208992, -6.55062e-09, -0.0208992, 0.0624628, 4.71581e-09, 19.4476, 9.62394, 0.767967)
+transform = Transform3D(4.22153e-09, 6.18917e-09, -0.06, -0.0568996, -0.0190378, -5.96719e-09, -0.0190378, 0.0568996, 4.52987e-09, 19.4476, 9.62394, 0.767967)
 
 [node name="Material_001-material2" type="MeshInstance3D" parent="Sketchfab_model/Collada visual scene group/Cube_009"]
+transform = Transform3D(1, 0, 7.10543e-15, 0, 1, -7.10543e-15, 0, -3.55271e-15, 1, -0.137863, 0.412029, 0)
 mesh = SubResource("ArrayMesh_wcxky")
 skeleton = NodePath("")
 
 [node name="Cube_014" type="Node3D" parent="Sketchfab_model/Collada visual scene group"]
 transform = Transform3D(0.0620384, -0.0221275, 6.23503e-09, 7.44615e-09, 2.31692e-09, -0.0658664, 0.0221275, 0.0620384, 4.68377e-09, 13.8598, 3.983, 1.31929)
-
-[node name="Material_001-material3" type="MeshInstance3D" parent="Sketchfab_model/Collada visual scene group/Cube_014"]
-mesh = SubResource("ArrayMesh_bcc6q")
-skeleton = NodePath("")
 
 [node name="Cube_015" type="Node3D" parent="Sketchfab_model/Collada visual scene group"]
 transform = Transform3D(0.0624628, 0.0208992, 1.10834e-08, 0.0208992, -0.0624628, -6.77913e-09, 8.35968e-09, 9.94555e-09, -0.0658664, 13.8598, 6.05133, -1.968)
