@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dn56bibw43crd"
+path="res://.godot/imported/mas alla.mp3-be2f5eeb3ab3da0c738c04b1307f370d.mp3str"
+
+[deps]
+
+source_file="res://music/mas alla.mp3"
+dest_files=["res://.godot/imported/mas alla.mp3-be2f5eeb3ab3da0c738c04b1307f370d.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
