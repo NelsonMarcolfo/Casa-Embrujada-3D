@@ -10,7 +10,7 @@ albedo_texture = ExtResource("1_wm4b4")
 roughness = 0.94
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_sr8py"]
-size = Vector3(0.384888, 0.5, 0.402771)
+size = Vector3(0.384888, 0.455139, 0.402771)
 
 [node name="Floor" type="Node3D"]
 
@@ -25,7 +25,7 @@ disable_mode = 1
 collision_layer = 2
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Floor/StaticBody3D"]
-transform = Transform3D(5, 0, 0, 0, 0.1, 0, 0, 0, 5, 0.0222779, -0.020512, -0.0114441)
+transform = Transform3D(5, 0, 0, 0, 0.1, 0, 0, 0, 5, 0.0222779, -0.0218334, -0.0114441)
 shape = SubResource("BoxShape3D_sr8py")
 
 [node name="Floor" type="MeshInstance3D" parent="Floor"]
@@ -39,7 +39,7 @@ disable_mode = 1
 collision_layer = 2
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Floor/Floor/StaticBody3D"]
-transform = Transform3D(5, 0, 0, 0, 0.1, 0, 0, 0, 5, 0.0690629, -0.0200928, -0.00870499)
+transform = Transform3D(5, 0, 0, 0, 0.1, 0, 0, 0, 5, 0.0690629, -0.0210144, -0.00870499)
 shape = SubResource("BoxShape3D_sr8py")
 
 [node name="Floor2" type="MeshInstance3D" parent="."]

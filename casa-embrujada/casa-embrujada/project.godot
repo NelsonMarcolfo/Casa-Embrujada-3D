@@ -15,6 +15,12 @@ run/main_scene="uid://cu7o0vetqi34k"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 
+[display]
+
+window/size/mode=3
+window/stretch/mode="viewport"
+window/stretch/aspect="keep_width"
+
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/godot_gltf2meshlib-135c0b12c02e354a26b644c082e7be622f1a524c/addons/gltf2meshlib/plugin.cfg")
